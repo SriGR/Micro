@@ -28,9 +28,6 @@ const MonthYearTable = () => {
         values: Array.from({ length: daysInMonth }, () => statusOptions[Math.floor(Math.random() * statusOptions.length)])
     }));
 
-    console.log(sampleData);
-
-
     return (
         <div className="w-full h-screen p-5 flex flex-col gap-3 justify-start items-start bg-[#fff] overflow-hidden">
             <div className="w-full h-10 flex justify-between items-center">
