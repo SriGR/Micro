@@ -138,3 +138,10 @@ body {
   background: #f1f1f1;
   border-radius: 8px;
 }
+
+.html5-qrcode-element{
+  font-size: 12px !important;
+}
+#reader__scan_region{
+  min-height: 64px !important;
+}
