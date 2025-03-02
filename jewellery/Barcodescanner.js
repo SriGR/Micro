@@ -42,12 +42,12 @@ const BarcodeScannerComponent = ({ onScanSuccess }) => {
           (decodedText) => {
             onScanSuccess(decodedText); // Send the scanned text to the parent component
             setIsScanning(false); // Hide the scanner after scan
-            scanner.stop().catch(err => console.error("Stop Error:", err));
+            scanner.stop().catch(err => console.log("Stop Error:", err));
             if (mediaStreamRef.current) {
               mediaStreamRef.current.getTracks().forEach(track => track.stop()); // Stop the stream after scanning
             }
           },
-          (error) => console.error('Scanning error:', error) // Handle scanning errors
+          (error) => console.log('Scanning error:', error) // Handle scanning errors
         );
 
         scannerRef.current = scanner;

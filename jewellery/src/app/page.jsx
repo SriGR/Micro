@@ -70,7 +70,7 @@ const page = () => {
               <BarcodeScannerComponent
                 barCode={handleBarcodeScan}  CloseCamera={handleCloseCamera}/>
             </div>}
-            <div className='flex justify-center items-center gap-2 w-full'>
+            <div className={`flex justify-center items-center gap-2 w-full ${isScanning ? 'mt-[5rem]':''}`}>
              <div style={{width:'90%'}}>
              <input type='text' placeholder='Item Code' className='InputStyle' value={state.ItemCode} onChange={(e) => {
                 dispatch({ type: 'SetItems', payload: { "ItemCode": e.target.value, "Purity": "22K", "GrossWt": "15.2g", "StoneWt": "2.5g", "NetWt": "12.7g", "Wastage": "1%" }, });
