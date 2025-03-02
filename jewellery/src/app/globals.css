@@ -145,3 +145,25 @@ body {
 #reader__scan_region{
   min-height: 64px !important;
 }
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.button {
+  width: 200px;
+  padding: 10px;
+  margin: 10px;
+  text-align: center;
+}
+
+.qr-scanner {
+  width: 80%;
+  max-width: 400px;
+  aspect-ratio: 1/1;
+  border: 2px solid #000;
+  margin: 20px 0;
+}
