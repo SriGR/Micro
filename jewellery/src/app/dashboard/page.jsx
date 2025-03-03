@@ -1,7 +1,7 @@
 "use client"
 import React, { useReducer, useEffect ,useState } from 'react';
 import Image from 'next/image';
-import BarcodeScannerComponent from '../../Barcodescanner';
+import BarcodeScannerComponent from '../../../Barcodescanner'
 import { MdQrCodeScanner } from "react-icons/md";
 
 // Initial state
