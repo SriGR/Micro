@@ -199,7 +199,8 @@ const AdvanceVoucher = () => {
                         className="TextAreaStyle w-[full]"
                         value={state.Remark}
                         onChange={(e) => handleChange('Remark', e.target.value)}
-                    ></textarea>
+                    >
+                    </textarea>
                 </div>
 
                 <div className="w-full flex justify-end items-start gap-3 pt-1">
