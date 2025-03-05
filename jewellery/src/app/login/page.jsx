@@ -1,20 +1,25 @@
 "use client";
-import React, { useState } from "react";
+import React, { use, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from 'react-toastify';
 
 function Page() {
-    const [user, setuser] = useState({ 'LoginID': '', 'Password': '' });
+    const [user, setuser] = useState({ 'UserName': '', 'Password': '' });
     const router = useRouter();
 
     const handleLogin = (e) => {
         e.preventDefault();
-        console.log("EVENT TRIGGER", user);
+        const param = {
+            "data":{
+              "UserName":user.UserName,
+              "Password":user.Password
+            }
+          }
 
         fetch('/api/login', {
             method: 'POST',
-            body: JSON.stringify(user)
+            body: JSON.stringify(param)
         }).then((res)=>{return res.json()}).then(async(res) => {
             const data = await res.Output
             console.log(data,'RESS')
@@ -22,6 +27,8 @@ function Page() {
                 toast.success(res.Output.status.message)
                 localStorage.setItem('userId', 1)
                router.push('/dashboard')
+            }else{
+                toast.warning(res.Output.status.message)
             }
         // toast.error('Error message');
         // toast.warning('Warning message');
@@ -57,20 +64,16 @@ function Page() {
                 <h1 className="text-xl font-bold text-center mb-6">Login to your Account</h1>
 
                 {/* Login Form */}
-                <form onSubmit={handleLogin} autoComplete="off" className="space-y-6 px-4 sm:px-0 mb-[20px]">
+                <form onSubmit={handleLogin} className="space-y-6 px-4 sm:px-0 mb-[20px]">
                     {/* Username Input */}
-                    
                     <div className="relative">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="LoginID">
-                    LoginID
-                        </label>
                         <input
-                            id="LoginID"
+                            id="username"
                             type="text"
                             required
-                            placeholder="LoginID"
-                            name="LoginID"
-                            value={user.LoginID}
+                            placeholder="UserName"
+                            name="UserName"
+                            value={user.UserName}
                             onChange={(e) => { handleChange(e) }}
                             className="peer w-full border border-gray-300 rounded-md px-3 pt-2 pb-2 outline-none focus:border-[#38a3a5] focus:ring-1 focus:ring-[#38a3a5]"
                         />
@@ -78,14 +81,11 @@ function Page() {
 
                     {/* Password Input */}
                     <div className="relative">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
-        Password
-      </label>
                         <input
                             id="password"
                             type="password"
                             required
-                            placeholder="Password"
+                            placeholder="password"
                             value={user.Password}
                             name="Password"
                             onChange={(e) => { handleChange(e) }}
@@ -93,7 +93,10 @@ function Page() {
                         />
                     </div>
 
-                   
+                    {/* Forgot Password / Signup */}
+                    <div className="text-right">
+                        <p className="underline text-sky-500 cursor-pointer text-sm">Forgot passord?</p>
+                    </div>
 
                     {/* Submit Button */}
                     <button
