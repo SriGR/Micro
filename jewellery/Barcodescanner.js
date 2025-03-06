@@ -1,60 +1,106 @@
 "use client";
-import { useState, useEffect } from "react";
-import { QrReader } from "react-qr-reader";
+import { useEffect, useRef, useState } from "react";
+import { Html5QrcodeScanner, Html5QrcodeSupportedFormats } from "html5-qrcode";
 
-const BarcodeScannerComponent = ({ onScanSuccess, CloseCamera }) => {
-  const [deviceId, setDeviceId] = useState(null);
-  const [cameraActive, setCameraActive] = useState(true);
+const BarcodeScannerComponent = ({ onScanSuccess }) => {
+  const [isScanning, setIsScanning] = useState(true);
+  const scannerRef = useRef(null);
+  const alertShownRef = useRef(false);
+  const [scannerSize, setScannerSize] = useState({ width: 100, height: 100 });
+
+  const checkCameraPermission = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      stream.getTracks().forEach((track) => track.stop());
+      return true;
+    } catch (error) {
+      if (!alertShownRef.current) {
+        alertShownRef.current = true;
+        alert("Camera access is required for scanning.");
+        setTimeout(() => {
+          alert("Please enable camera permissions in your browser settings and reload the page.");
+        }, 500);
+      }
+      return false;
+    }
+  };
 
   useEffect(() => {
-    // Only run this code on mobile devices or when the camera is enabled
-    if (cameraActive && typeof navigator !== "undefined" && navigator.mediaDevices) {
-      navigator.mediaDevices.enumerateDevices().then((devices) => {
-        // Filter out video devices (cameras)
-        const videoDevices = devices.filter((device) => device.kind === "videoinput");
-        if (videoDevices.length > 0) {
-          // Try to find the back camera first
-          const backCamera = videoDevices.find((device) =>
-            device.label.toLowerCase().includes("back")
-          );
-          if (backCamera) {
-            setDeviceId(backCamera.deviceId);
-          } else {
-            // If no back camera found, fall back to the first available camera
-            setDeviceId(videoDevices[0].deviceId);
+    const updateScannerSize = () => {
+      const screenWidth = window.innerWidth;
+      const newSize = screenWidth < 480 ? { width: 250, height: 250 } : { width: 350, height: 350 };
+      setScannerSize(newSize);
+    };
+
+    window.addEventListener("resize", updateScannerSize);
+    updateScannerSize();
+
+    return () => window.removeEventListener("resize", updateScannerSize);
+  }, []);
+
+  useEffect(() => {
+    const initializeScanner = async () => {
+      const hasPermission = await checkCameraPermission();
+      if (!hasPermission) return;
+
+      if (!scannerRef.current) {
+        scannerRef.current = new Html5QrcodeScanner(
+          "reader",
+          {
+            fps: 15,
+            qrbox: scannerSize,
+            aspectRatio: 1.0,
+            disableFlip: false,
+            formatsToSupport: [
+              Html5QrcodeSupportedFormats.QR_CODE,
+              Html5QrcodeSupportedFormats.CODE_128,
+              Html5QrcodeSupportedFormats.CODE_39,
+              Html5QrcodeSupportedFormats.EAN_13,
+              Html5QrcodeSupportedFormats.EAN_8,
+              Html5QrcodeSupportedFormats.UPC_A,
+              Html5QrcodeSupportedFormats.UPC_E,
+            ],
+          },
+          false
+        );
+
+        scannerRef.current.render(
+          (decodedText) => {
+            if (typeof onScanSuccess === "function") {
+              onScanSuccess(decodedText);
+              setIsScanning(false);
+              scannerRef.current.clear();
+            } else {
+              console.error("onScanSuccess is not a function");
+            }
+          },
+          (error) => {
+            if (error.name !== "NotFoundException") {
+              console.error("Scanning error:", error);
+            }
           }
-        }
-      }).catch((error) => {
-        console.error("Error accessing media devices:", error);
-      });
+        );
+      }
+    };
+
+    if (isScanning) {
+      initializeScanner();
     }
 
     return () => {
-      // Cleanup the camera when the component unmounts
-      setCameraActive(false);
+      if (scannerRef.current) {
+        scannerRef.current.clear();
+        scannerRef.current = null;
+      }
     };
-  }, [cameraActive]);
-
-  const handleCloseCamera = () => {
-    setCameraActive(false);
-    CloseCamera(); 
-  };
+  }, [isScanning, scannerSize]);
 
   return (
-    <div style={{ width: "200px", height: "200px" }}>
-      {cameraActive && (
-        <QrReader
-          constraints={{ video: { deviceId: deviceId ? { exact: deviceId } : undefined } }}
-          scanDelay={300}
-          onResult={(result, error) => {
-            if (result) {
-              onScanSuccess(result.text);
-            }
-          }}
-          style={{ width: "100%", height: "100%" }}
-        />
+    <div>
+      {isScanning && (
+        <div id="reader" style={{ width: scannerSize.width, height: scannerSize.height }}></div>
       )}
-      <button onClick={handleCloseCamera}>Close Camera</button>
+      {!isScanning && <button onClick={() => setIsScanning(true)}>Restart Scanner</button>}
     </div>
   );
 };
