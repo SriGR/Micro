@@ -68,7 +68,7 @@ const page = () => {
 
             {isScanning && <div className='w-full h-auto p-7 flex flex-col justify-center items-center rounded-xl gap-4  '>
               <BarcodeScannerComponent
-                barCode={handleBarcodeScan}  CloseCamera={handleCloseCamera}/>
+                onScanSuccess={handleBarcodeScan}  CloseCamera={handleCloseCamera}/>
             </div>}
             <div className={`flex justify-center items-center gap-2 w-full ${isScanning ? 'mt-[5rem]':''}`}>
              <div style={{width:'90%'}}>

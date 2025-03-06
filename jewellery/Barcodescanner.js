@@ -1,77 +1,53 @@
 "use client";
-import { useEffect, useRef, useState } from 'react';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { useState, useEffect } from "react";
+import { QrReader } from "react-qr-reader";
 
-const BarcodeScannerComponent = ({ onScanSuccess }) => {
-  const [isScanning, setIsScanning] = useState(true); // Manage scanner visibility
-  const scannerRef = useRef(null);
-  const mediaStreamRef = useRef(null); // To hold the camera stream
-  const alertShownRef = useRef(false); // Track if alerts were shown
-
-  const checkCameraPermission = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      mediaStreamRef.current = stream; // Save the stream
-      stream.getTracks().forEach(track => track.stop()); // Stop the stream immediately after permission
-      return true;
-    } catch (error) {
-      if (!alertShownRef.current) {
-        alertShownRef.current = true; // Prevent duplicate alerts
-        alert("Camera access is required for scanning.");
-        setTimeout(() => {
-          alert("Please enable camera permissions in your browser settings and reload the page.");
-        }, 500); // Second alert after a short delay
-      }
-      return false;
-    }
-  };
+const BarcodeScannerComponent = ({ onScanSuccess, CloseCamera }) => {
+  const [deviceId, setDeviceId] = useState(null);
+  const [cameraActive, setCameraActive] = useState(true);
 
   useEffect(() => {
-    const initializeScanner = async () => {
-      const hasPermission = await checkCameraPermission();
-      if (!hasPermission) return;
-
-      if (!scannerRef.current && isScanning) {
-        const scanner = new Html5QrcodeScanner('reader', {
-          fps: 10,
-          qrbox: { width: 150, height: 150 }, // Reduced size of the QR scanner box
-          aspectRatio: 1.0,
-        }, false);
-
-        scanner.render(
-          (decodedText) => {
-            onScanSuccess(decodedText); // Send the scanned text to the parent component
-            setIsScanning(false); // Hide the scanner after scan
-            scanner.stop().catch(err => console.log("Stop Error:", err));
-            if (mediaStreamRef.current) {
-              mediaStreamRef.current.getTracks().forEach(track => track.stop()); // Stop the stream after scanning
-            }
-          },
-          (error) => console.log('Scanning error:', error) // Handle scanning errors
+    if (cameraActive && typeof navigator !== "undefined" && navigator.mediaDevices) {
+      navigator.mediaDevices.enumerateDevices().then((devices) => {
+        const videoDevices = devices.filter((device) => device.kind === "videoinput");
+        const backCamera = videoDevices.find((device) =>
+          device.label.toLowerCase().includes("back")
         );
-
-        scannerRef.current = scanner;
-      }
-    };
-
-    initializeScanner();
-
+        if (backCamera) {
+          setDeviceId(backCamera.deviceId);
+        }
+      }).catch((error) => {
+        console.error("Error accessing media devices:", error);
+      });
+    }
+    
     return () => {
-      if (scannerRef.current) {
-        scannerRef.current.clear();
-        scannerRef.current = null;
-      }
-      if (mediaStreamRef.current) {
-        mediaStreamRef.current.getTracks().forEach(track => track.stop()); // Stop the stream when component unmounts
+      if (cameraActive) {
+        setCameraActive(false);
       }
     };
-  }, [isScanning]); // Dependency on `isScanning`
+  }, [cameraActive]);
+
+  const handleCloseCamera = () => {
+    setCameraActive(false);
+    CloseCamera(); 
+  };
 
   return (
-    <div>
-      {isScanning && (
-        <div id="reader" style={{ width: '200px', height: '200px' }}></div> // Set the scanner area size smaller
+    <div style={{ width: "200px", height: "200px" }}>
+      {cameraActive && (
+        <QrReader
+          constraints={{ video: { deviceId: deviceId ? { exact: deviceId } : undefined } }}
+          scanDelay={300}
+          onResult={(result, error) => {
+            if (result) {
+              onScanSuccess(result.text);
+            }
+          }}
+          style={{ width: "100%", height: "100%" }}
+        />
       )}
+      <button onClick={handleCloseCamera}>Close Camera</button>
     </div>
   );
 };
