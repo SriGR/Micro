@@ -7,24 +7,31 @@ const BarcodeScannerComponent = ({ onScanSuccess, CloseCamera }) => {
   const [cameraActive, setCameraActive] = useState(true);
 
   useEffect(() => {
+    // Only run this code on mobile devices or when the camera is enabled
     if (cameraActive && typeof navigator !== "undefined" && navigator.mediaDevices) {
       navigator.mediaDevices.enumerateDevices().then((devices) => {
+        // Filter out video devices (cameras)
         const videoDevices = devices.filter((device) => device.kind === "videoinput");
-        const backCamera = videoDevices.find((device) =>
-          device.label.toLowerCase().includes("back")
-        );
-        if (backCamera) {
-          setDeviceId(backCamera.deviceId);
+        if (videoDevices.length > 0) {
+          // Try to find the back camera first
+          const backCamera = videoDevices.find((device) =>
+            device.label.toLowerCase().includes("back")
+          );
+          if (backCamera) {
+            setDeviceId(backCamera.deviceId);
+          } else {
+            // If no back camera found, fall back to the first available camera
+            setDeviceId(videoDevices[0].deviceId);
+          }
         }
       }).catch((error) => {
         console.error("Error accessing media devices:", error);
       });
     }
-    
+
     return () => {
-      if (cameraActive) {
-        setCameraActive(false);
-      }
+      // Cleanup the camera when the component unmounts
+      setCameraActive(false);
     };
   }, [cameraActive]);
 
