@@ -8,17 +8,21 @@ const BarcodeScannerComponent = ({ onScanSuccess }) => {
   const alertShownRef = useRef(false);
   const [scannerSize, setScannerSize] = useState({ width: 100, height: 100 });
 
+  // ✅ Check Camera Permissions
   const checkCameraPermission = async () => {
     try {
-      // Allow camera access for both HTTP (localhost) and HTTPS
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" }, // Use back camera
-      });
-      stream.getTracks().forEach((track) => track.stop()); // Stop camera after checking permission
-      return true;
+      if (window.location.protocol === "https:" || window.location.hostname === "localhost") {
+        await navigator.mediaDevices.getUserMedia({ video: true });
+        return true;
+      } else {
+        console.warn("Camera access is restricted on HTTP (except for localhost).");
+        alert("For better security, please use HTTPS to access camera.");
+        return false;
+      }
     } catch (error) {
       if (!alertShownRef.current) {
         alertShownRef.current = true;
+        alert("Camera access is required for scanning.");
         setTimeout(() => {
           alert("Please enable camera permissions in your browser settings and reload the page.");
         }, 500);
@@ -27,6 +31,7 @@ const BarcodeScannerComponent = ({ onScanSuccess }) => {
     }
   };
 
+  // ✅ Update Scanner Size on Resize
   useEffect(() => {
     const updateScannerSize = () => {
       const screenWidth = window.innerWidth;
@@ -40,6 +45,7 @@ const BarcodeScannerComponent = ({ onScanSuccess }) => {
     return () => window.removeEventListener("resize", updateScannerSize);
   }, []);
 
+  // ✅ Initialize Scanner
   useEffect(() => {
     const initializeScanner = async () => {
       const hasPermission = await checkCameraPermission();
@@ -64,6 +70,9 @@ const BarcodeScannerComponent = ({ onScanSuccess }) => {
                 Html5QrcodeSupportedFormats.UPC_E,
               ],
               supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+              videoConstraints: {
+                facingMode: "environment", // ✅ Use back camera on mobile
+              },
             },
             false
           );
@@ -83,7 +92,7 @@ const BarcodeScannerComponent = ({ onScanSuccess }) => {
             }
           );
         }
-      }, 500); // Delay scanner initialization
+      }, 500); // Delay scanner initialization for better performance
     };
 
     if (isScanning) {
