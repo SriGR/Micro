@@ -87,7 +87,7 @@ const BarcodeScannerComponent = ({ onScanSuccess }) => {
             },
             (error) => {
               if (error.name !== "NotFoundException") {
-                console.error("Scanning error:", error);
+             //   // console.error("Scanning error:", error);
               }
             }
           );

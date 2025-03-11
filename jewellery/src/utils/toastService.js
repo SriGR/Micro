@@ -5,7 +5,7 @@ const showToast = (message, type = "success", position = "top-center") => {
     const validTypes = ["success", "error", "info", "warn", "dark"];
 
     if (!validTypes.includes(type)) {
-        console.error(`Invalid toast type: ${type}. Defaulting to "success".`);
+        // console.error(`Invalid toast type: ${type}. Defaulting to "success".`);
         type = "success";
     }
 

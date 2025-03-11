@@ -23,7 +23,7 @@ export async function connectDB() {
     }
     return dbPool;
   } catch (error) {
-    console.error("❌ Database connection error:", error);
+    // console.error("❌ Database connection error:", error);
     throw new Error("Database connection failed");
   }
 }

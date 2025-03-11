@@ -1,89 +1,183 @@
-"use client"
-import React, { useReducer, useEffect ,useState } from 'react';
-import Image from 'next/image';
-import BarcodeScannerComponent from '../../../Barcodescanner'
+"use client";
+import React, { useReducer, useEffect, useState, useRef  } from "react";
+import Image from "next/image";
+import BarcodeScannerComponent from "../../../Barcodescanner";
 import { MdQrCodeScanner } from "react-icons/md";
+import CommonGETAPICall from "../../utils/CommonGETCall";
+import { TbLogout2 } from "react-icons/tb";
+import { useRouter } from "next/navigation";
+
 
 // Initial state
 const initialState = {
-  ItemCode: '',
-  Purity: '',
-  GrossWt: '',
-  StoneWt: '',
-  NetWt: '',
-  Wastage: ''
+  Barcode: "",
+  Purity: "",
+  Grosswgt: "",
+  TotalWeightValue: "",
+  Netwgt: "",
+  SalWastPer: "",
 };
 
 // Reducer function to handle state updates
 const ItemsReducers = (state, action) => {
   switch (action.type) {
-    case 'SetItems':
-      return { ...state, ...action.payload }; // update the state with item details
-    case 'ItemCode':
-      // Find the item based on the barcode (ItemCode) and update state
-      const selectedItem = data.find(item => item.ItemCode === action.payload);
-      return selectedItem ? { ...state, ...selectedItem } : state;
+    case "SetItems":
+      return { ...state, ...action.payload };
+    case "Barcode":
+      return { ...state, Barcode: action.payload };
     default:
       return state;
   }
 };
 
-const page = () => {
+const Page = () => {
   // useReducer hook to handle state
+  const router = useRouter();
   const [state, dispatch] = useReducer(ItemsReducers, initialState);
   const [isScanning, setIsScanning] = useState(false); // Manage scanner visibility
+  const barCodeRef = useRef(null);
 
-  const data = [
-    { "Purity": "22K", "GrossWt": "15.2g", "StoneWt": "2.5g", "NetWt": "12.7g", "Wastage": "1%" },
-    { "Purity": "18K", "GrossWt": "10.5g", "StoneWt": "1.8g", "NetWt": "8.7g", "Wastage": "1.5%" },
-    { "Purity": "24K", "GrossWt": "20.3g", "StoneWt": "3.0g", "NetWt": "17.3g", "Wastage": "0.8%" },
-    { "Purity": "21K", "GrossWt": "12.8g", "StoneWt": "1.2g", "NetWt": "11.6g", "Wastage": "1.2%" },
-    { "Purity": "22K", "GrossWt": "18.7g", "StoneWt": "2.9g", "NetWt": "15.8g", "Wastage": "1%" }
-  ];
+  useEffect(() => {
+    if (state.Barcode) {
+      const timeout = setTimeout(() => {
+        dispatch({ type: "Barcode", payload: state.Barcode });
+        handleBarcodeScan(state.Barcode); 
+      }, 2000); 
+      return () => clearTimeout(timeout);
+    }
+  }, [state.Barcode]);
 
   const handleBarcodeScan = (scannedCode) => {
-    dispatch({ type: 'SetItems', payload: { "ItemCode": scannedCode, "Purity": "22K", "GrossWt": "15.2g", "StoneWt": "2.5g", "NetWt": "12.7g", "Wastage": "1%" }, });
+    const url = `/api/scanner?p1=${scannedCode}`;
 
+    CommonGETAPICall({ url }).then((response) => {
+      const { Output } = response;
+      if (Output.status.code === 200) {
+        console.log("Output:", Output.data[0]);
+        dispatch({ type: "SetItems", payload: Output.data[0] });
+      } else {
+        alert(Output.status.message);
+      }
+    });
   };
 
   const handleCloseCamera = () => {
-    // Hide the camera scanner
     setIsScanning(!isScanning);
+  };
+
+  async function clear() {
+    dispatch({ type: "Barcode", payload: "" });
+    dispatch({ type: "Purity", payload: "" });  
+    dispatch({ type: "Grosswgt", payload: "" });
+    dispatch({ type: "TotalWeightValue", payload: "" });
+    dispatch({ type: "Netwgt", payload: "" });
+    dispatch({ type: "SalWastPer", payload: "" });
+  }
+
+  async function logout() {
+   
+    localStorage.clear()
+    router.push('/login');
   }
 
   return (
-    <div className='ParentSection'>
-      <div className='w-screen h-screen overflow-hidden flex justify-center items-center ParentBg p-6'>
-        <div className='w-full h-auto bg-[#fff] p-7 flex flex-col justify-center items-center rounded-xl gap-4 CardShadow md:w-[350px]'>
+    <div className="ParentSection relative w-full h-full">
+      <div className="absolute flex justify-center items-center border cursor-pointer " style={{width:'30px',height:'30px',backgroundColor:'#ddd',right:'20px',top:'10px'}} title="logout" onClick={logout}>
+      <TbLogout2  style={{width:'25px',height:'25px'}}/>
+      </div>
+      <div className="w-screen h-screen overflow-auto flex justify-center items-center ParentBg p-6">
+        <div className="w-full h-auto bg-[#fff] p-7 flex flex-col justify-center items-center rounded-xl gap-4 CardShadow md:w-[350px]">
           <Image
             src="/images/BrandLogo.jpg"
-            alt="Description of image"
+            alt="Latha Jewellery Logo"
             width={170}
             height={0}
             className="w-[140px] md:w-[170px]"
           />
-          <span className='text-base tracking-wide font-medium text-yellow-500 mt-1 md:text-lg'>Latha Jewellery</span>
-          <form className='w-full flex flex-col justify-center items-center gap-5 mt-1'>
-            {/* Input fields now correctly reflect the state */}
+          <span className="text-base tracking-wide font-medium text-yellow-500 mt-1 md:text-lg">
+            Latha Jewellery
+          </span>
 
-            {isScanning && <div className='w-full h-auto p-7 flex flex-col justify-center items-center rounded-xl gap-4  '>
-              <BarcodeScannerComponent
-                onScanSuccess={handleBarcodeScan}  CloseCamera={handleCloseCamera}/>
-            </div>}
-            <div className={`flex justify-center items-center gap-2 w-full ${isScanning ? 'mt-[5rem]':''}`}>
-             <div style={{width:'90%'}}>
-             <input type='text' placeholder='Item Code' className='InputStyle' value={state.ItemCode} onChange={(e) => {
-                dispatch({ type: 'SetItems', payload: { "ItemCode": e.target.value, "Purity": "22K", "GrossWt": "15.2g", "StoneWt": "2.5g", "NetWt": "12.7g", "Wastage": "1%" }, });
-              }} />
-             </div>
-              <MdQrCodeScanner  onClick={handleCloseCamera}/>
+          <form className="w-full flex flex-col justify-center items-center gap-5 mt-1">
+            {isScanning && (
+              <div className="w-full h-auto p-7 flex flex-col justify-center items-center rounded-xl gap-4 ">
+                <BarcodeScannerComponent
+                  onScanSuccess={handleBarcodeScan}
+                  CloseCamera={handleCloseCamera}
+                />
+              </div>
+            )}
+            <div className={` flex justify-center items-center gap-2 w-full ${isScanning ? "mt-[5rem]" : ""}`}>
+              <div style={{ width: "90%", position: 'relative' }}>
+                <label htmlFor="barcode" className="text-sm">Barcode</label>
+                <input
+                  type="text"
+                  id="barcode"
+                  ref={barCodeRef}
+                  placeholder="Enter barcode"
+                  className="InputStyle"
+                  value={state.Barcode}
+                  style={{ paddingRight: '30px' }}
+                  onChange={(e) => {
+                    dispatch({ type: "Barcode", payload: e.target.value });
+                  }}
+                />
+                <div style={{ position: 'absolute', top: '25px', right: '10px' }} className="text-gray-500 cursor-pointer" onClick={ clear }>x</div>
+              </div>
+              <div className="mt-6"> <MdQrCodeScanner onClick={handleCloseCamera} /></div>
             </div>
-            <input type='text' placeholder='Purity' className='InputStyle' value={state.Purity} readOnly />
 
-            <input type='text' placeholder='G.Wt' className='InputStyle' value={state.GrossWt} readOnly />
-            <input type='text' placeholder='St.Wt' className='InputStyle' value={state.StoneWt} readOnly />
-            <input type='text' placeholder='Nt.Wt' className='InputStyle' value={state.NetWt} readOnly />
-            <input type='text' placeholder='Wastage' className='InputStyle' value={state.Wastage} readOnly />
+            <div className="w-full flex flex-col gap-3">
+              <label htmlFor="purity" className="text-sm">Purity</label>
+              <input
+                type="text"
+                id="purity"
+                placeholder="Purity"
+                className="InputStyle"
+                value={state.Purity}
+                readOnly
+              />
+
+              <label htmlFor="grosswgt" className="text-sm">Gross Weight</label>
+              <input
+                type="text"
+                id="grosswgt"
+                placeholder="Gross Weight"
+                className="InputStyle"
+                value={state.Grosswgt}
+                readOnly
+              />
+
+              <label htmlFor="totalwgt" className="text-sm">Total Weight</label>
+              <input
+                type="text"
+                id="totalwgt"
+                placeholder="Total Weight"
+                className="InputStyle"
+                value={state.TotalWeightValue}
+                readOnly
+              />
+
+              <label htmlFor="netwgt" className="text-sm">Net Weight</label>
+              <input
+                type="text"
+                id="netwgt"
+                placeholder="Net Weight"
+                className="InputStyle"
+                value={state.Netwgt}
+                readOnly
+              />
+
+              <label htmlFor="salwastper" className="text-sm">Sal Wast Per</label>
+              <input
+                type="text"
+                id="salwastper"
+                placeholder="Sal Wast Per"
+                className="InputStyle"
+                value={state.SalWastPer}
+                readOnly
+              />
+            </div>
           </form>
         </div>
       </div>
@@ -91,4 +185,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;

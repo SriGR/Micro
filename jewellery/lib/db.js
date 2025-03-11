@@ -1,15 +1,14 @@
 import sql from 'mssql';
 
-
 const config = {
-    user: process.env.DB_USER,
-    password: process.env.DB_PASS,
-    database: process.env.DB_NAME,
-    server: process.env.DB_HOST.trim(),
-    port: parseInt(process.env.DB_PORT) || 1433,
+    user: 'db_9e515d_latha_admin',
+    password: 'Password123',
+    database:'db_9e515d_latha',
+    server: 'sql5113.site4now.net',
+    port:1433,
     options: {
       encrypt: false,
-      trustServerCertificate: false,
+      trustServerCertificate: true,
     },
   };
   
@@ -23,7 +22,7 @@ export async function getDBConnection() {
       poolPromise = await sql.connect(config);
       console.log('✅ MSSQL Connected');
     } catch (err) {
-      console.error('❌ Database Connection Failed:', err.message);
+      // console.error('❌ Database Connection Failed:', err.message);
       throw err;
     }
   }

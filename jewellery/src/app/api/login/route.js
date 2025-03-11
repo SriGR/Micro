@@ -1,49 +1,59 @@
 "use server";
 import { NextResponse } from "next/server";
+import { getDBConnection } from "../../../../lib/db";
 
-
-export async function POST(req) {
+export async function POST(request) {
   try {
-    const body = await req.json(); 
+    const body = await request.json();
+  
+    const { UserName, Password } = body.data || {};
 
-    if (body.data.UserName === "admin" && body.data.Password === "admin@123") {
-      const Output = {
-        Output: {
-          status: {
-            code: 200,
-            message: "Login Successfully",
-          },
-          data: {
-            userId: 1,
-          },
-        },
-      };
-
-      return NextResponse.json(Output, { status: 200 });
-    } else {
+    if (!UserName || !Password) {
       return NextResponse.json(
         {
           Output: {
-            status: {
-              code: 400,
-              message: "Invalid Credentials",
-            },
-            data: {
-              userId: "",
-            },
+            status: { code: 400, message: "Missing required fields" },
           },
         },
-        { status: 400 } // ✅ Use status 400 for errors
+        { status: 200 }
       );
     }
-  } catch (err) {
+
+    const pool = await getDBConnection();
+
+    const query = `Exec sp_UserLogin ${UserName},${Password}`;
+    console.log("Executing Query:", query);
+    const qryExec = await pool.request().query(query);
+
+    const result = qryExec.recordset[0] || null;
+
+    if (!result) {
+      return NextResponse.json(
+        {
+          Output: {
+            status: { code: 400, message: "Invalid Credentials" },
+            data: { LoginStatus: 0 },
+          },
+        },
+        { status: 200 }
+      );
+    }
+
     return NextResponse.json(
       {
         Output: {
-          status: {
-            code: 500,
-            message: err.message,
-          },
+          status: { code: 200, message: "Login Successfully" },
+          data: result,
+        },
+      },
+      { status: 200 }
+    );
+  } catch (err) {
+    // console.error("Error in login API:", err.message);
+    return NextResponse.json(
+      {
+        Output: {
+          status: { code: 500, message: "Internal Server Error" },
         },
       },
       { status: 500 }

@@ -39,7 +39,7 @@ const Page = () => {
                 videoRef.current.srcObject = stream;
             }
         } catch (error) {
-            console.error("Error accessing camera:", error);
+            // console.error("Error accessing camera:", error);
         }
     };
 
