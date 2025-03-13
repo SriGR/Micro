@@ -18,7 +18,7 @@ let poolPromise;
 export async function getDBConnection() {
   if (!poolPromise) {
     try {
-        console.log(config,'config')
+        //console.log(config,'config')
       poolPromise = await sql.connect(config);
       console.log('✅ MSSQL Connected');
     } catch (err) {

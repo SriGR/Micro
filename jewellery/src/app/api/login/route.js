@@ -21,33 +21,26 @@ export async function POST(request) {
 
     const pool = await getDBConnection();
 
-    const query = `Exec sp_UserLogin ${UserName},${Password}`;
+    const query = `Exec sp_UserLogin '${UserName}','${Password}'`;
     console.log("Executing Query:", query);
     const qryExec = await pool.request().query(query);
 
     const result = qryExec.recordset[0] || null;
-
-    if (!result) {
-      return NextResponse.json(
-        {
-          Output: {
-            status: { code: 400, message: "Invalid Credentials" },
-            data: { LoginStatus: 0 },
-          },
-        },
-        { status: 200 }
-      );
-    }
-
+    
+    const loginStatus = result?.LoginStatus || 0; 
     return NextResponse.json(
       {
         Output: {
-          status: { code: 200, message: "Login Successfully" },
-          data: result,
+          status: {
+            code: loginStatus === 1 ? 200 : 400,
+            message: loginStatus === 1 ? "Login Success" : "Login Failed",
+          },
+          data: { LoginStatus: loginStatus },
         },
       },
       { status: 200 }
     );
+   
   } catch (err) {
     // console.error("Error in login API:", err.message);
     return NextResponse.json(

@@ -9,8 +9,8 @@ export async function GET(request) {
         const p1 = searchParams.get('p1');
         const pool = await getDBConnection();
 
-        const query = `Exec GetTotalWeightValue '${p1}'`;
-        console.log("Executing Query:", query);
+        const query = `Exec GetTotalWeightValue @Barcode ='${p1}'`;
+       // console.log("Executing Query:", query);
         const qryExec = await pool.request().query(query);
 
         const result = qryExec.recordset || null;
@@ -19,7 +19,7 @@ export async function GET(request) {
             return NextResponse.json(
                 {
                     Output: {
-                        status: { code: 400, message: "Invalid ItemCode" },
+                        status: { code: 400, message: "Invalid Item Code" },
                     },
                 },
                 { status: 200 }
