@@ -87,7 +87,7 @@ const Page = () => {
       {/* Main Container */}
       <div className="w-screen h-screen overflow-auto flex justify-center items-center ParentBg p-6">
         <div className="w-full h-auto bg-[#fff] p-7 flex flex-col justify-center items-center rounded-xl gap-4 CardShadow md:w-[350px]">
-          
+
           <Image src="/images/BrandLogo.jpg" alt="Latha Jewellery Logo" width={170} height={0}
             className="w-[140px] md:w-[170px]" />
           <span className="text-base tracking-wide font-medium text-yellow-500 mt-1 md:text-lg">
@@ -104,38 +104,30 @@ const Page = () => {
             )}
 
             {/* Barcode Input */}
-            <div className={`flex justify-center items-center gap-2 w-full ${isScanning ? "mt-[5rem]" : ""}`}>
-              <div style={{ width: "90%", position: "relative" }}>
-                <label htmlFor="barcode" className="text-sm">Barcode</label>
+            <div className={`flex flex-col gap-2 w-full ${isScanning ? "mt-[5rem]" : ""}`}>
+              <label htmlFor="barcode" className="text-black text-base">Barcode </label>
+              <div className="flex w-full justify-center items-center h-auto gap-2">
                 <input
                   type="text"
                   id="barcode"
                   ref={barCodeRef}
-                  placeholder="Enter barcode"
-                  className="InputStyle"
+                  placeholder="Enter barcode Number"
+                  className="InputStyle mt-2"
                   value={state.Barcode}
                   style={{ paddingRight: "30px" }}
                   disabled={isLoading}
                   onChange={(e) => dispatch({ type: "Barcode", payload: e.target.value })}
                 />
-                <div
-                  style={{ position: "absolute", top: "25px", right: "10px" }}
-                  className="text-gray-500 cursor-pointer"
-                  onClick={clear}
-                >
-                  x
-                </div>
+                <MdQrCodeScanner onClick={handleCloseCamera} style={{ fontSize: '30px', marginTop: '5px' }} />
               </div>
-              <div className="mt-6">
-                <MdQrCodeScanner onClick={handleCloseCamera} />
-              </div>
+
             </div>
 
             {/* Loading Indicator */}
             {isLoading && <p className="text-blue-500">Loading...</p>}
 
             {/* Details Section */}
-            <div className="w-full flex flex-col gap-3 border-b text-xs">
+            <div className="w-full flex flex-col gap-3 border-b text-xs pb-3">
               <p className="flex justify-between">
                 <span className="text-black text-base">Purity:</span>
                 <span className="font-bold text-green-800 text-lg">{state.Purity}</span>
@@ -155,7 +147,7 @@ const Page = () => {
             </div>
 
             {/* Total Weight */}
-            <div className="w-full flex flex-col gap-3">
+            <div className="w-full flex flex-col gap-3 ">
               <p className="flex justify-between">
                 <span className="text-black text-base">Total Weight:</span>
                 <span className="font-bold text-green-800 text-lg">{state.TotalWeightValue}</span>
