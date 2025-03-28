@@ -75,6 +75,46 @@ body {
   outline: 1px solid rgb(197, 197, 197);
 }
 
+.InputStyle50 {
+  width: 50%;
+  height: 100%;
+  padding: 0px 10px;
+  color: #4b4b4b;
+  border: 1px solid #ddd;
+  font-size: 12px;
+  letter-spacing: 0.8px !important;
+  border-radius: 4px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: none;
+}
+
+.InputStyle50:focus {
+  outline: 1px solid rgb(197, 197, 197);
+}
+
+.Textarea50 {
+  width: 70%;
+  min-height: 50px;
+  max-height: 100px;
+  padding: 0px 10px;
+  color: #4b4b4b;
+  border: 1px solid #ddd;
+  font-size: 12px;
+  letter-spacing: 0.8px !important;
+  border-radius: 4px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: none;
+}
+
+.Textarea50:focus {
+  outline: 1px solid rgb(197, 197, 197);
+}
+
+
 .ScrollBarForStatus::-webkit-scrollbar {
   width: 5px;
 }
@@ -139,9 +179,10 @@ body {
   border-radius: 8px;
 }
 
-.html5-qrcode-element{
+.html5-qrcode-element {
   font-size: 12px !important;
 }
-#reader__scan_region{
+
+#reader__scan_region {
   min-height: 64px !important;
 }
