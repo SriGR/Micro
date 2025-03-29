@@ -1,173 +1,121 @@
 "use client";
-import React, { useReducer, useEffect, useState, useRef } from "react";
+import { useState } from "react";
 import Image from "next/image";
-import BarcodeScannerComponent from "../../../Barcodescanner";
-import { MdQrCodeScanner } from "react-icons/md";
-import CommonGETAPICall from "../../utils/CommonGETCall";
-import { TbLogout2 } from "react-icons/tb";
-import { useRouter } from "next/navigation";
+import { Menu, X, Home, Settings, User, LogOut, ShoppingCart, CreditCard, BarChart } from "lucide-react";
+import Link from "next/link";
 
-// Initial state
-const initialState = {
-  Barcode: "",
-  Purity: "",
-  Grosswgt: "",
-  TotalWeightValue: "",
-  Netwgt: "",
-  SalWastPer: "",
+const Sidebar = ({ isOpen, toggleSidebar }) => {
+  return (
+    <div className={`bg-gray-900 text-white w-64 min-h-screen p-5 transition-all ${isOpen ? "block" : "hidden"} md:block`}>
+      <div className="flex justify-between items-center">
+        <Image
+          src="/images/BrandLogo.jpg"
+          alt="Brand Logo"
+          width={170}
+          height={0}
+          className="w-[120px] sm:w-[140px] md:w-[170px]"
+        />
+        <button onClick={toggleSidebar} className="md:hidden">
+          <X className="w-6 h-6" />
+        </button>
+      </div>
+      <ul className="mt-5 space-y-2">
+        <li>
+          <Link href="/dashboard" className="flex items-center p-2 hover:bg-gray-700 rounded">
+            <Home className="w-5 h-5 mr-2" /> Dashboard
+          </Link>
+        </li>
+        <li>
+          <Link href="/supplier" className="flex items-center p-2 hover:bg-gray-700 rounded">
+            <User className="w-5 h-5 mr-2" /> Supplier
+          </Link>
+        </li>
+        <li>
+          <Link href="/purchase-details" className="flex items-center p-2 hover:bg-gray-700 rounded">
+            <User className="w-5 h-5 mr-2" /> Purchase Details
+          </Link>
+        </li>
+        <li>
+          <Link href="/purchase-master" className="flex items-center p-2 hover:bg-gray-700 rounded">
+            <User className="w-5 h-5 mr-2" /> Purchase Master
+          </Link>
+        </li>
+        <li>
+          <Link href="/category" className="flex items-center p-2 hover:bg-gray-700 rounded">
+            <User className="w-5 h-5 mr-2" /> Category Master
+          </Link>
+        </li>
+        <li>
+          <Link href="/item-master" className="flex items-center p-2 hover:bg-gray-700 rounded">
+            <User className="w-5 h-5 mr-2" /> Item Master
+          </Link>
+        </li>
+        <li>
+          <Link href="/settings" className="flex items-center p-2 hover:bg-gray-700 rounded">
+            <Settings className="w-5 h-5 mr-2" /> Settings
+          </Link>
+        </li>
+      </ul>
+      <button className="mt-5 w-full flex items-center p-2 bg-red-600 hover:bg-red-700 rounded text-white">
+        <LogOut className="w-5 h-5 mr-2" /> Logout
+      </button>
+    </div>
+  );
 };
 
-// Reducer function
-const ItemsReducers = (state, action) => {
-  switch (action.type) {
-    case "SetItems":
-      return { ...state, ...action.payload };
-    case "Barcode":
-      return { ...state, Barcode: action.payload };
-    case "Clear":
-      return initialState;
-    default:
-      return state;
-  }
+const Header = ({ toggleSidebar }) => {
+  return (
+    <header className="bg-gray-100 p-4 flex justify-between items-center shadow-md">
+      <button onClick={toggleSidebar} className="md:hidden">
+        <Menu className="w-6 h-6" />
+      </button>
+      <h1 className="text-lg font-bold">Dashboard</h1>
+      <div className="flex items-center space-x-4">
+        <span className="text-gray-700">Admin</span>
+      </div>
+    </header>
+  );
 };
 
-const Page = () => {
-  const router = useRouter();
-  const [state, dispatch] = useReducer(ItemsReducers, initialState);
-  const [isScanning, setIsScanning] = useState(false);
-  const [isLoading, setIsLoading] = useState(false); // Loading state
-  const barCodeRef = useRef(null);
-
-  useEffect(() => {
-    if (state.Barcode) {
-      setIsLoading(true);
-      const timeout = setTimeout(() => {
-        handleBarcodeScan(state.Barcode);
-      }, 2000);
-      return () => clearTimeout(timeout);
-    }
-  }, [state.Barcode]);
-
-  const handleBarcodeScan = (scannedCode) => {
-    const url = `/api/scanner?p1=${scannedCode}`;
-
-    CommonGETAPICall({ url }).then((response) => {
-      const { Output } = response;
-      if (Output.status.code === 200) {
-        dispatch({ type: "SetItems", payload: Output.data[0] });
-      } else {
-        alert(Output.status.message);
-      }
-      setIsLoading(false);
-    });
-  };
-
-  const handleCloseCamera = () => {
-    setIsScanning(!isScanning);
-  };
-
-  const clear = () => {
-    dispatch({ type: "Clear" });
-  };
-
-  const logout = () => {
-    localStorage.clear();
-    router.push("/login");
-  };
+const DashboardLayout = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const toggleSidebar = () => setIsOpen(!isOpen);
 
   return (
-    <div className="ParentSection relative w-full h-full">
-      {/* Logout Button */}
-      <div className="absolute flex justify-center items-center border cursor-pointer"
-        style={{ width: "30px", height: "30px", backgroundColor: "#ddd", right: "20px", top: "10px" }}
-        title="logout" onClick={logout}>
-        <TbLogout2 style={{ width: "25px", height: "25px" }} />
-      </div>
-
-      {/* Main Container */}
-      <div className="w-screen h-screen overflow-auto flex justify-center items-center ParentBg p-6">
-        <div className="w-full h-auto bg-[#fff] p-7 flex flex-col justify-center items-center rounded-xl gap-4 CardShadow md:w-[350px]">
-
-          <Image src="/images/BrandLogo.jpg" alt="Latha Jewellery Logo" width={170} height={0}
-            className="w-[140px] md:w-[170px]" />
-          <span className="text-base tracking-wide font-medium text-yellow-500 mt-1 md:text-lg">
-            Latha Jewellery
-          </span>
-
-          {/* Form Section */}
-          <form className="w-full flex flex-col justify-center items-center gap-5 mt-1">
-            {/* Barcode Scanner */}
-            {isScanning && (
-              <div className="w-full h-auto p-7 flex flex-col justify-center items-center rounded-xl gap-4 ">
-                <BarcodeScannerComponent onScanSuccess={handleBarcodeScan} CloseCamera={handleCloseCamera} />
+    <div className="flex">
+      <Sidebar isOpen={isOpen} toggleSidebar={toggleSidebar} />
+      <div className="flex-1">
+        <Header toggleSidebar={toggleSidebar} />
+        <main className="p-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
+            <div className="bg-blue-500 p-5 rounded-lg text-white flex items-center space-x-3">
+              <ShoppingCart className="w-10 h-10" />
+              <div>
+                <h2 className="text-lg font-bold">Purchase History</h2>
+                <p>120 Orders</p>
               </div>
-            )}
-
-            {/* Barcode Input */}
-            <div className={`flex flex-col gap-2 w-full ${isScanning ? "mt-[5rem]" : ""}`}>
-              <label htmlFor="barcode" className="text-black text-base">Barcode </label>
-              <div className="flex w-full justify-center items-center h-auto gap-2">
-                <input
-                  type="text"
-                  id="barcode"
-                  ref={barCodeRef}
-                  placeholder="Enter barcode Number"
-                  className="InputStyle mt-2"
-                  value={state.Barcode}
-                  style={{ paddingRight: "30px" }}
-                  disabled={isLoading}
-                  onChange={(e) => dispatch({ type: "Barcode", payload: e.target.value })}
-                />
-                <MdQrCodeScanner onClick={handleCloseCamera} style={{ fontSize: '30px', marginTop: '5px' }} />
+            </div>
+            <div className="bg-green-500 p-5 rounded-lg text-white flex items-center space-x-3">
+              <CreditCard className="w-10 h-10" />
+              <div>
+                <h2 className="text-lg font-bold">Total Transactions</h2>
+                <p>$25,000</p>
               </div>
-
             </div>
-
-            {/* Loading Indicator */}
-            {isLoading && <p className="text-blue-500">Loading...</p>}
-
-            {/* Details Section */}
-            <div className="w-full flex flex-col gap-3 border-b text-xs pb-3">
-              <p className="flex justify-between">
-                <span className="text-black text-base">Purity:</span>
-                <span className="font-bold text-green-800 text-lg">{state.Purity}</span>
-              </p>
-              <p className="flex justify-between">
-                <span className="text-black text-base">Gross Weight:</span>
-                <span className="font-bold text-green-800 text-lg">{state.Grosswgt}</span>
-              </p>
-              <p className="flex justify-between">
-                <span className="text-black text-base">Net Weight:</span>
-                <span className="font-bold text-green-800 text-lg">{state.Netwgt}</span>
-              </p>
-              <p className="flex justify-between">
-                <span className="text-black text-base">Sal Wast Per:</span>
-                <span className="font-bold text-green-800 text-lg">{state.SalWastPer}</span>
-              </p>
+            <div className="bg-purple-500 p-5 rounded-lg text-white flex items-center space-x-3">
+              <BarChart className="w-10 h-10" />
+              <div>
+                <h2 className="text-lg font-bold">Analytics</h2>
+                <p>450 Visitors</p>
+              </div>
             </div>
-
-            {/* Total Weight */}
-            <div className="w-full flex flex-col gap-3 ">
-              <p className="flex justify-between">
-                <span className="text-black text-base">Total Weight:</span>
-                <span className="font-bold text-green-800 text-lg">{state.TotalWeightValue}</span>
-              </p>
-            </div>
-          </form>
-
-          {/* Clear Button */}
-          <button
-            type="button"
-            className="bg-red-500 text-white px-4 py-2 rounded"
-            onClick={clear}
-            disabled={isLoading}
-          >
-            {isLoading ? "Clearing..." : "Clear"}
-          </button>
-        </div>
+          </div>
+         
+        </main>
       </div>
     </div>
   );
 };
 
-export default Page;
+export default DashboardLayout;
+
