@@ -17,6 +17,7 @@ import Paper from "@mui/material/Paper";
 import showToast from '../../../utils/toastService';
 import { ToastContainer } from "react-toastify";
 import { SlHome } from "react-icons/sl";
+import CommonAPISave from "../../Components/CommonAPISave";
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
     const [openSection, setOpenSection] = useState(null);
@@ -160,13 +161,12 @@ const SupplierMaster = () => {
     const [state, dispatch] = useReducer(ItemMasterReducers, initialState);
     console.log(state, "state");
 
-
-    const StateSelect = [
+    const [StateSelect,setStateSelect]=useState([
         { code: 1, name: "State1" },
         { code: 2, name: "State2" },
         { code: 3, name: "State3" }
-    ];
-
+    ])
+    
     const [tableData, setTableData] = useState([{
         CustomerName: "001", Address1: "Address1", Address2: "Address2", Address3: "Address3",
         PhoneNo: 234234234, GstNo: 2312312351235, StateCode: "423423", StateName: "Covai",
@@ -199,6 +199,68 @@ const SupplierMaster = () => {
     const handleCancel = () => {
         dispatch({ type: "RESET" });
     };
+
+    const dropDownSelect = async()=>{
+        const url = '/api/InsertSupplier';
+        const params ={
+
+        }
+        await CommonAPISave({url,params}).then((res)=>{
+            if (res.Output.status.code && res.Output.data.length > 0) {
+                const data = res.Output.data
+                setStateSelect(data)
+                showToast(res.Output.status.message, "success")
+            } else {
+                showToast(res.Output.status.message, "warn")
+            }
+        })
+    }
+
+    const saveFunction = async () => {
+        const url = '/api/InsertSupplier';
+        const params = {
+            "data": state
+        }
+        for (let key in state) {
+            if (!state[key]) {
+                showToast(`Kindly enter the ${key}`, "warn")
+                return false
+            }
+            await CommonAPISave({ url, params }).then((res) => {
+                console.log(res, 'component')
+                if (res.Output.status.code && res.Output.data.length > 0) {
+                    const data = res.Output.data
+                    showToast(res.Output.status.message, "success")
+                } else {
+                    showToast(res.Output.status.message, "warn")
+                }
+            })
+        }
+    }
+
+    const tableSelect = async () => {
+        const url = '/api/GetCategories';
+        const params = {
+                pageNumber: 1,
+                pageSize: 10
+            
+        }
+        await CommonAPISave({ url, params }).then((res) => {
+            console.log(res, 'component')
+            if (res.Output.status.code && res.Output.data.length > 0) {
+                const data = res.Output.data
+                console.log(data, 'data')
+                // setTableData(data)
+            }
+        })
+
+    }
+
+    useEffect(() => {
+        tableSelect()
+    }, [])
+
+
 
     return (
         <div className="flex h-screen">
@@ -345,6 +407,7 @@ const SupplierMaster = () => {
                                 <select
                                     className="InputStyle w-full pr-8 appearance-none"
                                     value={state.StateName}
+                                    onClick={dropDownSelect}
                                     onChange={(e) => {
                                         const selectedCategory = StateSelect.find(item => item.name === e.target.value);
                                         dispatch({ type: "StateName", payload: e.target.value });

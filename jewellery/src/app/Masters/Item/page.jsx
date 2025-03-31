@@ -17,6 +17,7 @@ import Paper from "@mui/material/Paper";
 import showToast from '../../../utils/toastService';
 import { ToastContainer } from "react-toastify";
 import { SlHome } from "react-icons/sl";
+import CommonAPISave from "../../Components/CommonAPISave";
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
     const [openSection, setOpenSection] = useState(null);
@@ -196,17 +197,59 @@ const ItemMaster = () => {
     }
 
     const handleSave = () => {
-        setTableData([...tableData, {
-            ItemCode: state.ItemCode, ItemName: state.ItemName, CategoryCode: state.CategoryCode,
-            CategoryName: state.CategoryName, HSNcode: state.HSNcode, TaxCode: state.TaxCode,
-            TaxName: state.TaxName, UOMname: state.UOMname
-        }]);
+        saveFunction()
         dispatch({ type: "RESET" });
     };
 
     const handleCancel = () => {
         dispatch({ type: "RESET" });
     };
+
+     const saveFunction = async () => {
+            const url = '/api/createCategory';
+            const params = {
+                "data": state
+            }
+            for (let key in state) {
+                if (!state[key]) {
+                    showToast(`Kindly enter the ${key}`, "warn")
+                    return false
+                }
+                await CommonAPISave({ url, params }).then((res) => {
+                    console.log(res, 'component')
+                    if (res.Output.status.code && res.Output.data.length > 0) {
+                        const data = res.Output.data
+                        showToast(res.Output.status.message, "success")
+                    } else {
+                        showToast(res.Output.status.message, "warn")
+                    }
+                })
+            }
+        }
+    
+        const tableSelect = async () => {
+            const url = '/api/GetCategories';
+            const params = {
+                "data": {
+                    status: 'Active',
+                    pageNumber: 1,
+                    pageSize: 10
+                }
+            }
+            await CommonAPISave({ url, params }).then((res) => {
+                console.log(res, 'component')
+                if (res.Output.status.code && res.Output.data.length > 0) {
+                    const data = res.Output.data
+                    console.log(data, 'data')
+                    // setTableData(data)
+                }
+            })
+    
+        }
+    
+        useEffect(() => {
+            tableSelect()
+        }, [])
 
     return (
         <div className="flex h-screen">
