@@ -239,7 +239,7 @@ const ItemMaster = () => {
             const res = await CommonAPISave({ url, params });
     
             if (res.Output.status.code == 200) {
-                const pdfbuffer = Object.values(res.Output.data.pdfBuffer)
+                const pdfbuffer = res.Output.data.pdfBuffer
                 const byteArray = new Uint8Array(pdfbuffer);
                 const blob = new Blob([byteArray], { type: 'application/pdf' });
                 const pdfUrl = URL.createObjectURL(blob);
