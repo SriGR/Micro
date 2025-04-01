@@ -2,12 +2,9 @@
 import { NextResponse } from "next/server";
 import { getDBConnection } from "../../../../lib/db";
 
-export async function POST(request) {
+export async function POST() {
     try {
-        const requestBody = await request.json();
-        const body = requestBody.data
-
-        const query =  `EXEC GetCategories @pageNumber = ${body.pageNumber}, @pageSize = ${body.pageSize}`
+        const query = `SELECT * FROM ms_suppliermaster`;
         console.log(query, 'Query')
         const pool = await getDBConnection();
         const qryExec = await pool.request().query(query);
@@ -54,6 +51,5 @@ export async function POST(request) {
         );
     }
 }
-
 
 

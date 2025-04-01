@@ -220,7 +220,7 @@ const ItemMaster = () => {
 
             {/* Main Content Area */}
             <section className="flex-1 h-full">
-                <div className="w-full h-10 bg-gray-200 flex items-center px-2">
+                <div className="w-full h-10 bg-gray-200 flex items-center px-2 text-black">
                     <span className="text-sm font-medium">Purchase Entry</span>
                 </div>
 

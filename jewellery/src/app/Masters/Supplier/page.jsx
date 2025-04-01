@@ -1,5 +1,5 @@
 "use client";
-import { useState, useReducer } from "react";
+import { useState, useReducer,useEffect, useCallback} from "react";
 import Image from "next/image";
 import { X, Home, LogOut, ChevronDown } from "lucide-react";
 import Link from "next/link";
@@ -161,17 +161,9 @@ const SupplierMaster = () => {
     const [state, dispatch] = useReducer(ItemMasterReducers, initialState);
     console.log(state, "state");
 
-    const [StateSelect,setStateSelect]=useState([
-        { code: 1, name: "State1" },
-        { code: 2, name: "State2" },
-        { code: 3, name: "State3" }
-    ])
+    const [StateSelect,setStateSelect]=useState([])
     
-    const [tableData, setTableData] = useState([{
-        CustomerName: "001", Address1: "Address1", Address2: "Address2", Address3: "Address3",
-        PhoneNo: 234234234, GstNo: 2312312351235, StateCode: "423423", StateName: "Covai",
-        OpCreditBalance: 8900, OpDebitBalance: 9887878
-    }]);
+    const [tableData, setTableData] = useState([]);
 
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -183,63 +175,55 @@ const SupplierMaster = () => {
         else if (!state.StateCode) {
             return showToast("Kindly select the State", "warn")
         }
-        handleSave();
+        saveFunction();
     }
-
-    const handleSave = () => {
-        setTableData([...tableData, {
-            CustomerName: state.CustomerName, Address1: state.Address1, Address2: state.Address2,
-            Address3: state.Address3, PhoneNo: state.PhoneNo, GstNo: state.GstNo,
-            StateCode: state.StateCode, StateName: state.StateName,
-            OpCreditBalance: state.OpCreditBalance, OpDebitBalance: state.OpDebitBalance
-        }]);
-        dispatch({ type: "RESET" });
-    };
 
     const handleCancel = () => {
         dispatch({ type: "RESET" });
     };
 
-    const dropDownSelect = async()=>{
-        const url = '/api/InsertSupplier';
-        const params ={
-
-        }
-        await CommonAPISave({url,params}).then((res)=>{
-            if (res.Output.status.code && res.Output.data.length > 0) {
-                const data = res.Output.data
-                setStateSelect(data)
-                showToast(res.Output.status.message, "success")
-            } else {
-                showToast(res.Output.status.message, "warn")
-            }
-        })
-    }
-
-    const saveFunction = async () => {
-        const url = '/api/InsertSupplier';
-        const params = {
-            "data": state
-        }
-        for (let key in state) {
-            if (!state[key]) {
-                showToast(`Kindly enter the ${key}`, "warn")
-                return false
-            }
-            await CommonAPISave({ url, params }).then((res) => {
-                console.log(res, 'component')
-                if (res.Output.status.code && res.Output.data.length > 0) {
-                    const data = res.Output.data
-                    showToast(res.Output.status.message, "success")
-                } else {
-                    showToast(res.Output.status.message, "warn")
+       const dropDownSelect = async(endPoint,TablePagination)=>{
+                const url = `/api/${endPoint}`;
+                const params = {
+                        status: 'Active',
+                        pageNumber: TablePagination.pageNumber,
+                        pageSize: TablePagination.pageSize
                 }
-            })
-        }
-    }
+                await CommonAPISave({ url, params }).then((res) => {
+                    console.log(res, 'component')
+                    if (res.Output.status.code && res.Output.data.length > 0) {
+                        const data = res.Output.data
+                        console.log(data, 'data')
+                        if(endPoint == 'GetStates'){
+                            setStateSelect(data)
+                        }
+                    }
+                })
+            }
 
-    const tableSelect = async () => {
-        const url = '/api/GetCategories';
+            const saveFunction = useCallback(async () => {
+                const url = '/api/InsertSupplier';         
+                const params = { ...state };
+                try {
+                    const res = await CommonAPISave({ url, params });
+                    console.log(res, 'component');
+            
+                    if (res.Output?.status?.code && res.Output?.data?.length > 0) {
+                        showToast(res.Output.status.message, "success");
+                    } else {
+                        showToast(res.Output.status.message, "warn");
+                    }
+                    dispatch({ type: "RESET" });
+                    tableSelect();
+                } catch (error) {
+                    console.error("Error saving supplier:", error);
+                    showToast("Failed to save. Please try again.", "error");
+                }
+            }, [state]);
+            
+
+    const tableSelect = useCallback(async () => {
+        const url = '/api/getSupplier';
         const params = {
                 pageNumber: 1,
                 pageSize: 10
@@ -250,11 +234,10 @@ const SupplierMaster = () => {
             if (res.Output.status.code && res.Output.data.length > 0) {
                 const data = res.Output.data
                 console.log(data, 'data')
-                // setTableData(data)
+                setTableData(data)
             }
         })
-
-    }
+    },[])
 
     useEffect(() => {
         tableSelect()
@@ -270,7 +253,7 @@ const SupplierMaster = () => {
 
             {/* Main Content Area */}
             <section className="flex-1 h-full">
-                <div className="w-full h-10 bg-gray-200 flex items-center px-2">
+                <div className="w-full h-10 bg-gray-200 flex items-center px-2 text-black text-black">
                     <span className="text-sm font-medium">Supplier Master</span>
                 </div>
                 <div className="w-full h-[235px] p-2 pt-4">
@@ -407,17 +390,17 @@ const SupplierMaster = () => {
                                 <select
                                     className="InputStyle w-full pr-8 appearance-none"
                                     value={state.StateName}
-                                    onClick={dropDownSelect}
+                                    onClick={()=>{ dropDownSelect('GetStates',{pageNumber:1,pageSize:10})}}
                                     onChange={(e) => {
-                                        const selectedCategory = StateSelect.find(item => item.name === e.target.value);
+                                        const selectedCategory = StateSelect.find(item => item.statename === e.target.value);
                                         dispatch({ type: "StateName", payload: e.target.value });
-                                        dispatch({ type: "StateCode", payload: selectedCategory ? selectedCategory.code : "" });
+                                        dispatch({ type: "StateCode", payload: selectedCategory ? selectedCategory.statecode : "" });
                                     }}
                                 >
                                     <option value="">Select State</option>
                                     {StateSelect.map((item) => (
-                                        <option key={item.id} value={item.name}>
-                                            {item.name}
+                                        <option key={item.statecode} value={item.statename}>
+                                            {item.statename}
                                         </option>
                                     ))}
                                 </select>
@@ -500,29 +483,33 @@ const SupplierMaster = () => {
                         <Table stickyHeader>
                             <TableHead>
                                 <TableRow>
+                                    <TableCell>Suppliercode</TableCell>
                                     <TableCell>Customer Name</TableCell>
                                     <TableCell>Address 1</TableCell>
                                     <TableCell>Address 2</TableCell>
                                     <TableCell>Address 3</TableCell>
                                     <TableCell>Phone No</TableCell>
                                     <TableCell>GST No</TableCell>
-                                    <TableCell>State Name</TableCell>
+                                    {/* <TableCell>State Name</TableCell> */}
                                     <TableCell>OP Debit Balance</TableCell>
                                     <TableCell>OP Credit Balance</TableCell>
+                                    <TableCell>Balance</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {(tableData && tableData.length > 0) && tableData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
                                     <TableRow>
-                                        <TableCell>{row.CustomerName}</TableCell>
-                                        <TableCell>{row.Address1}</TableCell>
-                                        <TableCell>{row.Address2}</TableCell>
-                                        <TableCell>{row.Address3}</TableCell>
-                                        <TableCell>{row.PhoneNo}</TableCell>
-                                        <TableCell>{row.GstNo}</TableCell>
-                                        <TableCell>{row.StateName}</TableCell>
-                                        <TableCell>{row.OpCreditBalance}</TableCell>
-                                        <TableCell>{row.OpDebitBalance}</TableCell>
+                                        <TableCell>{row.suppliercode}</TableCell>
+                                        <TableCell>{row.customername}</TableCell>
+                                        <TableCell>{row.address1}</TableCell>
+                                        <TableCell>{row.address2}</TableCell>
+                                        <TableCell>{row.address3}</TableCell>
+                                        <TableCell>{row.phonenumber}</TableCell>
+                                        <TableCell>{row.gstnumber}</TableCell>
+                                        {/* <TableCell>{row.StateName}</TableCell> */}
+                                        <TableCell>{row.openingcredit}</TableCell>
+                                        <TableCell>{row.openingdebit}</TableCell>
+                                        <TableCell>{row.balance}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

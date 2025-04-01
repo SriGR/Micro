@@ -1,7 +1,7 @@
 "use client";
-import { useState, useReducer, useEffect } from "react";
+import { useState, useReducer, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { X, Home, LogOut, ChevronDown } from "lucide-react";
+import { X, LogOut, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { MdClear } from "react-icons/md";
 import { IoFolderOutline } from "react-icons/io5";
@@ -152,8 +152,8 @@ const CategoryMaster = () => {
     const toggleSidebar = () => setIsOpen(!isOpen);
 
     const [state, dispatch] = useReducer(CategoryMasterReducers, initialState);
-    const [tableData, setTableData] = useState([{ code: "001", name: "Category Name 1" },
-    { code: "002", name: "Category Name 2" }, { code: "003", name: "Category Name 3" }]);
+    console.log(state,'state')
+    const [tableData, setTableData] = useState([]);
 
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -165,41 +165,32 @@ const CategoryMaster = () => {
         else if (!state.CategoryName) {
             return showToast("Kindly enter the Category Name", "warn")
         }
-        handleSave();
-    }
-
-    const handleSave = () => {
         saveFunction();
-        dispatch({ type: "RESET" });
-    };
+    }
 
     const handleCancel = () => {
         dispatch({ type: "RESET" });
     };
 
-    const saveFunction = async () => {
+    const saveFunction = useCallback(async () => {
         const url = '/api/createCategory';
         const params = {
-            "data": state
+           ...state
         }
-        for (let key in state) {
-            if (!state[key]) {
-                showToast(`Kindly enter the ${key}`, "warn")
-                return false
-            }
             await CommonAPISave({ url, params }).then((res) => {
-                console.log(res, 'component')
                 if (res.Output.status.code && res.Output.data.length > 0) {
                     const data = res.Output.data
                     showToast(res.Output.status.message, "success")
                 } else {
                     showToast(res.Output.status.message, "warn")
                 }
+                dispatch({ type: "RESET" });
+                tableSelect()
             })
-        }
-    }
+        
+    },[state])
 
-    const tableSelect = async () => {
+    const tableSelect = useCallback(async () => {
         const url = '/api/GetCategories';
         const params = {
                 pageNumber: 1,
@@ -207,15 +198,13 @@ const CategoryMaster = () => {
             
         }
         await CommonAPISave({ url, params }).then((res) => {
-            console.log(res, 'component')
             if (res.Output.status.code && res.Output.data.length > 0) {
                 const data = res.Output.data
-                console.log(data, 'data')
-                // setTableData(data)
+                setTableData(data)
             }
         })
 
-    }
+    })
 
     useEffect(() => {
         tableSelect()
@@ -230,7 +219,7 @@ const CategoryMaster = () => {
 
             {/* Main Content Area */}
             <section className="flex-1 h-full">
-                <div className="w-full h-10 bg-gray-200 flex items-center px-2">
+                <div className="w-full h-10 bg-gray-200 flex items-center px-2 text-black">
                     <span className="text-sm font-medium">Category Master</span>
                 </div>
                 <div className="w-full h-[110px] p-2 pt-4">
@@ -239,7 +228,7 @@ const CategoryMaster = () => {
                             <label className="w-full text-xs">Category Code:</label>
                             <div className="relative w-full">
                                 <input
-                                    type="text"
+                                    type="number"
                                     className="EntryInputField100 pr-8"
                                     placeholder="Enter Category Code"
                                     value={state.CategoryCode}
@@ -247,7 +236,7 @@ const CategoryMaster = () => {
                                 />
                                 {state.CategoryCode && (
                                     <span
-                                        onClick={() => dispatch({ type: "CategoryCode", payload: "" })}
+                                        onClick={() => dispatch({ type: "CategoryCode", payload: null })}
                                         className="absolute right-2 top-1/2 transform -translate-y-1/2 text-red-500 cursor-pointer"
                                     >
                                         <MdClear />
@@ -306,8 +295,8 @@ const CategoryMaster = () => {
                             <TableBody>
                                 {(tableData && tableData.length > 0) && tableData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
                                     <TableRow>
-                                        <TableCell>{row.code}</TableCell>
-                                        <TableCell>{row.name}</TableCell>
+                                        <TableCell>{row.categorycode}</TableCell>
+                                        <TableCell>{row.categoryname}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

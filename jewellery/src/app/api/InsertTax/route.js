@@ -9,17 +9,9 @@ export async function POST(request) {
         console.log(typeof requestBody.data)
         const body = requestBody.data
         console.log(body,'body')
-        const reqObject = {
-            taxcode: 1,
-            taxname: body.TaxName || '',
-            taxpercentage:body.TaxPercentage||'',
-            status: body.status || 'Active',
-            createdby: body.createdby || 'Admin',
-            createdtime: body.createdtime || ''
-        }
-        const spName = `EXEC InsertTax`
+    
 
-        const query = await queryConstruct(spName, reqObject);
+        const query = `EXEC InsertTax ${body.TaxCode},'${body.TaxName}', ${body.TaxPercentage}, 'Active','${body.createdby}', ''`;
         console.log(query, 'Query')
 
         const pool = await getDBConnection();
@@ -69,20 +61,4 @@ export async function POST(request) {
     }
 }
 
-async function queryConstruct(spName, json) {
-    const query = Object.values(json).map(val => {
-        if (typeof val === 'string') {
-            return `'${val}'`;
-        } else if (typeof val === 'number') {
-            return `${val}`;
-        } else if (val === null) {
-            return `null`;
-        } else {
-            return `''`;
-        }
-    }).join(",");
-
-    console.log(query, 'query');
-    return `${spName} ${query}`;
-}
 

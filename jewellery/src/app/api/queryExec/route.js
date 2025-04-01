@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getDBConnection } from "../../../../lib/db";
 
-export async function POST(request) {
+export async function POST() {
   try {
 
     const pool = await getDBConnection();

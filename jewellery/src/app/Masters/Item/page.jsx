@@ -1,5 +1,5 @@
 "use client";
-import { useState, useReducer } from "react";
+import { useState, useReducer ,useEffect, useCallback} from "react";
 import Image from "next/image";
 import { X, Home, LogOut, ChevronDown } from "lucide-react";
 import Link from "next/link";
@@ -149,7 +149,8 @@ const initialState = {
     HSNcode: "",
     TaxCode: "",
     TaxName: "",
-    UOMname: ""
+    UOMname: "",
+    status: "Active"
 };
 
 const ItemMaster = () => {
@@ -157,26 +158,11 @@ const ItemMaster = () => {
     const toggleSidebar = () => setIsOpen(!isOpen);
 
     const [state, dispatch] = useReducer(ItemMasterReducers, initialState);
-    console.log(state, "state");
-
-
-    const CategorySelect = [
-        { code: 1, name: "Category1" },
-        { code: 2, name: "Category2" },
-        { code: 3, name: "Category3" }
-    ];
-
-    const TaxSelect = [
-        { code: 1, name: "Tax1" },
-        { code: 2, name: "Tax2" },
-        { code: 3, name: "Tax3" }
-    ];
-
-    const [tableData, setTableData] = useState([{
-        ItemCode: "001", ItemName: "Item Name 1", CategoryName: "Category Name 1", HSNcode: "HSN Code",
-        TaxName: "Tax Name", UOMname: "UOM Name"
-    }]);
-
+   
+    const [tableData, setTableData] = useState([]);
+    const [Categories,setCategories]=useState([]);
+    const [Taxes,setTaxes]=useState([])
+    
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -193,63 +179,71 @@ const ItemMaster = () => {
         else if (!state.TaxCode) {
             return showToast("Kindly select the Tax", "warn")
         }
-        handleSave();
+        saveFunction();
     }
 
-    const handleSave = () => {
-        saveFunction()
-        dispatch({ type: "RESET" });
-    };
 
     const handleCancel = () => {
         dispatch({ type: "RESET" });
     };
 
-     const saveFunction = async () => {
-            const url = '/api/createCategory';
-            const params = {
-                "data": state
-            }
-            for (let key in state) {
-                if (!state[key]) {
-                    showToast(`Kindly enter the ${key}`, "warn")
-                    return false
-                }
-                await CommonAPISave({ url, params }).then((res) => {
-                    console.log(res, 'component')
-                    if (res.Output.status.code && res.Output.data.length > 0) {
-                        const data = res.Output.data
-                        showToast(res.Output.status.message, "success")
-                    } else {
-                        showToast(res.Output.status.message, "warn")
-                    }
-                })
-            }
+     const saveFunction = useCallback(async () => {
+        const url = '/api/InsertItem';
+        const params = {
+            ...state
         }
+            await CommonAPISave({ url, params }).then((res) => {
+                if (res.Output.status.code && res.Output.data.length > 0) {
+                    const data = res.Output.data
+                    showToast(res.Output.status.message, "success")
+                } else {
+                    showToast(res.Output.status.message, "warn")
+                }
+                dispatch({ type: "RESET" });
+                tableSelect();
+            })
+    },[state])
     
-        const tableSelect = async () => {
-            const url = '/api/GetCategories';
+        const tableSelect = useCallback(async () => {
+            const url = '/api/GetItems';
             const params = {
-                "data": {
                     status: 'Active',
                     pageNumber: 1,
                     pageSize: 10
+            }
+            await CommonAPISave({ url, params }).then((res) => {
+                
+                if (res.Output.status.code && res.Output.data.length > 0) {
+                    const data = res.Output.data
+                    setTableData(data)
                 }
+            })
+        },[])
+    
+        useEffect(() => {
+            tableSelect()
+        }, [])
+
+        const dropDownSelect = async(endPoint,TablePagination)=>{
+            const url = `/api/${endPoint}`;
+            const params = {
+                    status: 'Active',
+                    pageNumber: TablePagination.pageNumber,
+                    pageSize: TablePagination.pageSize
             }
             await CommonAPISave({ url, params }).then((res) => {
                 console.log(res, 'component')
                 if (res.Output.status.code && res.Output.data.length > 0) {
                     const data = res.Output.data
                     console.log(data, 'data')
-                    // setTableData(data)
+                    if(endPoint == 'GetCategories'){
+                        setCategories(data)
+                    }else if(endPoint == 'GetTaxes'){
+                        setTaxes(data)
+                    }
                 }
             })
-    
         }
-    
-        useEffect(() => {
-            tableSelect()
-        }, [])
 
     return (
         <div className="flex h-screen">
@@ -259,7 +253,7 @@ const ItemMaster = () => {
 
             {/* Main Content Area */}
             <section className="flex-1 h-full">
-                <div className="w-full h-10 bg-gray-200 flex items-center px-2">
+                <div className="w-full h-10 bg-gray-200 flex items-center px-2 text-black">
                     <span className="text-sm font-medium">Item Master</span>
                 </div>
                 <div className="w-full h-[175px] p-2 pt-4">
@@ -268,7 +262,7 @@ const ItemMaster = () => {
                             <label className="w-full text-xs">Item Code:</label>
                             <div className="relative w-full">
                                 <input
-                                    type="text"
+                                    type="number"
                                     className="EntryInputField100 pr-8"
                                     placeholder="Enter Item Code"
                                     value={state.ItemCode}
@@ -313,15 +307,16 @@ const ItemMaster = () => {
                                     className="InputStyle w-full pr-8 appearance-none"
                                     value={state.CategoryName}
                                     onChange={(e) => {
-                                        const selectedCategory = CategorySelect.find(item => item.name === e.target.value);
+                                        const selectedCategory = Categories.find(item => item.categoryname === e.target.value);
                                         dispatch({ type: "CategoryName", payload: e.target.value });
-                                        dispatch({ type: "CategoryCode", payload: selectedCategory ? selectedCategory.code : "" });
+                                        dispatch({ type: "CategoryCode", payload: selectedCategory ? selectedCategory.categorycode : "" });
                                     }}
+                                    onClick={()=>{ dropDownSelect('GetCategories',{pageNumber:1,pageSize:10})}}
                                 >
                                     <option value="">Select Category</option>
-                                    {CategorySelect.map((item) => (
-                                        <option key={item.id} value={item.name}>
-                                            {item.name}
+                                    {Categories.map((item) => (
+                                        <option key={item.categorycode} value={item.categoryname}>
+                                            {item.categoryname}
                                         </option>
                                     ))}
                                 </select>
@@ -368,15 +363,16 @@ const ItemMaster = () => {
                                     className="InputStyle w-full pr-8 appearance-none"
                                     value={state.TaxName}
                                     onChange={(e) => {
-                                        const selectedTax = TaxSelect.find(item => item.name === e.target.value);
+                                        const selectedTax = Taxes.find(item => item.taxname === e.target.value);
                                         dispatch({ type: "TaxName", payload: e.target.value });
-                                        dispatch({ type: "TaxCode", payload: selectedTax ? selectedTax.code : "" });
+                                        dispatch({ type: "TaxCode", payload: selectedTax ? selectedTax.taxcode : "" });
                                     }}
+                                    onClick={()=>{ dropDownSelect('GetTaxes',{pageNumber:1,pageSize:10})}}
                                 >
                                     <option value="">Select Tax</option>
-                                    {TaxSelect.map((item) => (
-                                        <option key={item.id} value={item.name}>
-                                            {item.name}
+                                    {Taxes.map((item) => (
+                                        <option key={item.taxcode} value={item.taxname}>
+                                            {item.taxname}
                                         </option>
                                     ))}
                                 </select>
@@ -450,12 +446,12 @@ const ItemMaster = () => {
                             <TableBody>
                                 {(tableData && tableData.length > 0) && tableData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
                                     <TableRow>
-                                        <TableCell>{row.ItemCode}</TableCell>
-                                        <TableCell>{row.ItemName}</TableCell>
-                                        <TableCell>{row.CategoryName}</TableCell>
-                                        <TableCell>{row.HSNcode}</TableCell>
-                                        <TableCell>{row.TaxName}</TableCell>
-                                        <TableCell>{row.UOMname}</TableCell>
+                                        <TableCell>{row.itemcode}</TableCell>
+                                        <TableCell>{row.itemname}</TableCell>
+                                        <TableCell>{row.categoryname}</TableCell>
+                                        <TableCell>{row.hsncode}</TableCell>
+                                        <TableCell>{row.taxname}</TableCell>
+                                        <TableCell>{row.uomname}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

@@ -4,12 +4,15 @@ import { getDBConnection } from "../../../../lib/db";
 
 export async function POST(request) {
     try {
-        const requestBody = await request.json();
-        const body = requestBody.data
 
-        const query =  `EXEC GetCategories @pageNumber = ${body.pageNumber}, @pageSize = ${body.pageSize}`
+        const requestBody = await request.json();
+        console.log(typeof requestBody.data)
+        const body = requestBody.data
+       
+        const query = `EXEC InsertItem ${body.ItemCode},'${body.ItemName}','${body.HSNcode}','${body.UOMname}',${body.CategoryCode},${body.TaxCode},'${body.status}','${body.createdby}',''`
         console.log(query, 'Query')
         const pool = await getDBConnection();
+      
         const qryExec = await pool.request().query(query);
         console.log(qryExec, 'qryExec')
 
@@ -43,7 +46,7 @@ export async function POST(request) {
         }
 
     } catch (err) {
-        console.error("Error in login API:", err.message);
+        
         return NextResponse.json(
             {
                 Output: {
@@ -54,6 +57,5 @@ export async function POST(request) {
         );
     }
 }
-
 
 

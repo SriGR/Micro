@@ -6,13 +6,8 @@ export async function POST(request) {
     try {
         const requestBody = await request.json();
         const body = requestBody.data
-        const reqObject = {
-            pageNumber: body.pageNumber || 1,
-            pageSize: body.pageSize || 10
-        }
-        const spName = `EXEC GetStates`
 
-        const query = await queryConstruct(spName, reqObject);
+        const query =`EXEC GetStates @pageNumber = ${body.pageNumber}, @pageSize = ${body.pageSize}`;
         console.log(query, 'Query')
         const pool = await getDBConnection();
 
@@ -59,22 +54,5 @@ export async function POST(request) {
             { status: 500 }
         );
     }
-}
-
-async function queryConstruct(spName, json) {
-    const query = Object.values(json).map(val => {
-        if (typeof val === 'string') {
-            return `'${val}'`;
-        } else if (typeof val === 'number') {
-            return `${val}`;
-        } else if (val === null) {
-            return `null`;
-        } else {
-            return `''`;
-        }
-    }).join(",");
-
-    console.log(query, 'query');
-    return `${spName} ${query}`;
 }
 

@@ -6,8 +6,8 @@ export async function POST(request) {
     try {
         const requestBody = await request.json();
         const body = requestBody.data
-
-        const query =  `EXEC GetCategories @pageNumber = ${body.pageNumber}, @pageSize = ${body.pageSize}`
+    
+        const query = `EXEC GetItems @pageNumber = ${body.pageNumber}, @pageSize = ${body.pageSize}`;
         console.log(query, 'Query')
         const pool = await getDBConnection();
         const qryExec = await pool.request().query(query);

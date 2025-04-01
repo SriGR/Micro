@@ -4,21 +4,10 @@ import { getDBConnection } from "../../../../lib/db";
 
 export async function POST(request) {
     try {
-        // await request.json()
         const requestBody = await request.json();
-        console.log(typeof requestBody.data)
         const body = requestBody.data
-        const reqObject = {
-            categorycode: 1,
-            categoryname: body.CategoryCode || '',
-            remarks: body.remarks || '',
-            createdby: body.createdby || 'Admin',
-            createdtime: body.createdtime || '',
-            status: body.status || 'Active',
-            activeby: body.activeby || 'Admin'
-        }
-        const spName = `EXEC InsertCategory`
-        const query = await queryConstruct(spName, reqObject);
+  
+        const query = `EXEC InsertCategory ${body.CategoryCode},'${body.CategoryName}', '${body.remarks}','${body.createdby}','${body.status}','${body.activeby}',''`;
         const pool = await getDBConnection();
         console.log(query, 'Query')
         // return false
@@ -68,20 +57,5 @@ export async function POST(request) {
     }
 }
 
-async function queryConstruct(spName, json) {
-    const query = Object.values(json).map(val => {
-        if (typeof val === 'string') {
-            return `'${val}'`;
-        } else if (typeof val === 'number') {
-            return `${val}`;
-        } else if (val === null) {
-            return `null`;
-        } else {
-            return `''`;
-        }
-    }).join(",");
 
-    console.log(query, 'query');
-    return `${spName} ${query}`;
-}
 

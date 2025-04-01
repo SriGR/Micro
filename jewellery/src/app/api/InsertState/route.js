@@ -8,18 +8,8 @@ export async function POST(request) {
         const requestBody = await request.json();
         console.log(typeof requestBody.data)
         const body = requestBody.data
-        const reqObject = {
-            statecode: 1,
-            statename: body.StateName || '',
-            remarks: body.remarks || '',
-            createdby: body.createdby || 'Admin',
-            createdtime: body.createdtime || '',
-            status: body.status || 'Active',
-            activeby: body.activeby || 'Admin'
-        }
-        const spName = `EXEC InsertState`
-
-        const query = await queryConstruct(spName, reqObject);
+      
+        const query = `EXEC InsertState ${body.StateCode}, '${body.StateName}','${body.remarks}','${body.status}','${body.createdby}','${body.activeby}','' ;`
         console.log(query, 'Query')
         const pool = await getDBConnection();
       
@@ -68,20 +58,4 @@ export async function POST(request) {
     }
 }
 
-async function queryConstruct(spName, json) {
-    const query = Object.values(json).map(val => {
-        if (typeof val === 'string') {
-            return `'${val}'`;
-        } else if (typeof val === 'number') {
-            return `${val}`;
-        } else if (val === null) {
-            return `null`;
-        } else {
-            return `''`;
-        }
-    }).join(",");
-
-    console.log(query, 'query');
-    return `${spName} ${query}`;
-}
 
