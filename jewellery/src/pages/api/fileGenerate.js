@@ -1,13 +1,19 @@
-import puppeteer from "puppeteer";
+import puppeteer from 'puppeteer-core';
+import chromium from '@sparticuz/chromium';
 
 export default async function handler(req, res) {
-  
     try {
-        const { state, tableData } = await req.body.data; 
-        console.log(req.body,'state')
+        const { state, tableData } = req.body.data;
+        console.log(req.body, 'state');
+
         const html = await template(state, tableData);
-       // return res.send(html)
-        const browser = await puppeteer.launch();
+
+        const browser = await puppeteer.launch({
+            headless: "new",
+            args: chromium.args,
+            executablePath: await chromium.executablePath(),
+        });
+
         const page = await browser.newPage();
         await page.setContent(html, { waitUntil: "networkidle0" });
 
@@ -17,11 +23,25 @@ export default async function handler(req, res) {
 
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader("Content-Disposition", "attachment; filename=invoice.pdf");
-        return res.status(200).json({ "Output": { "status": { "code": 200, "message": "Success" }, data: { "pdfBuffer": pdfBuffer } } })
+
+        return res.status(200).json({
+            "Output": {
+                "status": { "code": 200, "message": "Success" },
+                "data": { "pdfBuffer": pdfBuffer.toString("base64") }
+            }
+        });
     } catch (error) {
-        return res.status(400).json({ "Output": { "status": { "code": 400, "message": error.message }, data: { "pdfBuffer": "" } } })
+        return res.status(400).json({
+            "Output": {
+                "status": { "code": 400, "message": error.message },
+                "data": { "pdfBuffer": "" }
+            }
+        });
     }
 }
+
+
+
 
 const style = `<style>
         body {
@@ -87,8 +107,8 @@ const style = `<style>
 
     </style>`
 
-    async function template(state, tableData) {
-        return `<!DOCTYPE html>
+async function template(state, tableData) {
+    return `<!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
@@ -160,7 +180,7 @@ const style = `<style>
         </div>
     </body>
     </html>`;
-    }
+}
 
 
 async function generateTableRows(tableData) {
