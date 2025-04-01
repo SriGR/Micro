@@ -1,7 +1,7 @@
 "use client";
-import { useState, useReducer } from "react";
+import { useState, useReducer, useEffect } from "react";
 import Image from "next/image";
-import { X, Home, LogOut, ChevronDown } from "lucide-react";
+import { X, LogOut, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { MdClear } from "react-icons/md";
 import { IoFolderOutline } from "react-icons/io5";
@@ -14,9 +14,10 @@ import TableHead from "@mui/material/TableHead";
 import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
-import showToast from '../../../utils/toastService';
+// import showToast from '../../../utils/toastService';
 import { ToastContainer } from "react-toastify";
 import { SlHome } from "react-icons/sl";
+import CommonAPISave from "app/Components/CommonAPISave";
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
     const [openSection, setOpenSection] = useState(null);
@@ -163,7 +164,7 @@ const initialState = {
     TaxValue: "",
     RoundOff: "",
     FreightCharge: "",
-    InvoiceTotal: ""
+    InvoiceTotal: "",
 };
 
 const ItemMaster = () => {
@@ -171,29 +172,13 @@ const ItemMaster = () => {
     const toggleSidebar = () => setIsOpen(!isOpen);
 
     const [state, dispatch] = useReducer(ItemMasterReducers, initialState);
+    console.log(state, 'State')
 
-    const CustomerSelect = [
-        { code: 1, name: "Customer1" },
-        { code: 2, name: "Customer2" },
-        { code: 3, name: "Customer3" }
-    ];
+    const [tableData, setTableData] = useState([]);
 
-    const ItemSelect = [
-        { code: 1, name: "Item1" },
-        { code: 2, name: "Item2" },
-        { code: 3, name: "Item3" }
-    ];
-
-    const TaxSelect = [
-        { code: 1, name: "Tax1" },
-        { code: 2, name: "Tax2" },
-        { code: 3, name: "Tax3" }
-    ];
-
-    const [tableData, setTableData] = useState([{
-        ItemCode: "001", ItemName: "Item Name 1", CategoryName: "Category Name 1", HSNcode: "HSN Code",
-        TaxName: "Tax Name", UOMname: "UOM Name"
-    }]);
+    const [ItemSelect, setItemSelect] = useState([])
+    const [CustomerSelect, setCustomerSelect] = useState([]);
+    const [TaxSelect, setTaxSelect] = useState([]);
 
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -212,6 +197,78 @@ const ItemMaster = () => {
         setTableData([...tableData, newRow]);
     };
 
+
+    const dropDownSelect = async (endPoint, TablePagination, index) => {
+        const url = `/api/${endPoint}`;
+        const params = {
+            status: 'Active',
+            pageNumber: TablePagination.pageNumber,
+            pageSize: TablePagination.pageSize
+        }
+        await CommonAPISave({ url, params }).then((res) => {
+            if (res.Output.status.code && res.Output.data.length > 0) {
+                const data = res.Output.data    
+                if (endPoint == 'GetItems') {
+                    setItemSelect(data)
+                } else if (endPoint == 'getSupplier') {
+                    setCustomerSelect(data)
+                } else if (endPoint == 'GetTaxes') {
+                    setTaxSelect(data)
+                }
+            }
+        })
+    }
+    useEffect(() => {
+        const GrandTotal = tableData.reduce((acc, row) =>
+            row.Total ? acc + Number(row.Total) : acc, 0
+        );
+
+        dispatch({ type: "GrandTotal", payload: GrandTotal || "" });
+    }, [tableData]);
+
+
+    const handleFileGenerate = async (type) => {
+        console.log(state, 'State');
+        console.log(tableData, 'tableData');
+        console.log(type, 'type');
+    
+        const url = '/api/fileGenerate';
+        const params = { state, tableData, type };
+    
+        try {
+            const res = await CommonAPISave({ url, params });
+    
+            if (res.Output.status.code == 200) {
+                const pdfbuffer = Object.values(res.Output.data.pdfBuffer)
+                const byteArray = new Uint8Array(pdfbuffer);
+                const blob = new Blob([byteArray], { type: 'application/pdf' });
+                const pdfUrl = URL.createObjectURL(blob);
+                const uniqueFileName = `invoice_${Date.now()}.pdf`;
+    
+                if (type === 'print') {
+                    // Open PDF in a new tab for printing
+                    const printWindow = window.open(pdfUrl, '_blank');
+                    // if (printWindow) {
+                    //     printWindow.onload = () => printWindow.print();
+                    // }
+                } else if (type === 'download') {
+                    // Create a link and trigger download
+                    const link = document.createElement('a');
+                    link.href = pdfUrl;
+                    link.download = uniqueFileName;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            } else {
+                console.error('PDF buffer is missing in the response');
+            }
+        } catch (error) {
+            console.error('Error generating file:', error);
+        }
+    };
+
+    
     return (
         <div className="flex h-screen">
             <ToastContainer />
@@ -232,16 +289,21 @@ const ItemMaster = () => {
                                 <select
                                     className="InputStyle w-full pr-8 appearance-none"
                                     value={state.CustomerName}
+                                    onClick={() => { dropDownSelect('getSupplier', { pageNumber: 1, pageSize: 10 }) }}
                                     onChange={(e) => {
-                                        const selectedCustomer = CustomerSelect.find(item => item.name === e.target.value);
+                                        const selectedCustomer = CustomerSelect.find(item => item.customername === e.target.value);
                                         dispatch({ type: "CustomerName", payload: e.target.value });
-                                        dispatch({ type: "CustomerCode", payload: selectedCustomer ? selectedCustomer.code : "" });
+                                        dispatch({ type: "Address1", payload: selectedCustomer ? selectedCustomer.address1 : "" });
+                                        dispatch({ type: "Address2", payload: selectedCustomer ? selectedCustomer.address2 : "" });
+                                        dispatch({ type: "Address3", payload: selectedCustomer ? selectedCustomer.address3 : "" });
+                                        dispatch({ type: "PhoneNo", payload: selectedCustomer ? selectedCustomer.phonenumber : "" });
+
                                     }}
                                 >
                                     <option value="">Select Customer</option>
-                                    {CustomerSelect.map((item) => (
-                                        <option key={item.id} value={item.name}>
-                                            {item.name}
+                                    {CustomerSelect.map((item, index) => (
+                                        <option key={index} value={item.customername}>
+                                            {item.customername}
                                         </option>
                                     ))}
                                 </select>
@@ -250,7 +312,10 @@ const ItemMaster = () => {
                                     <span
                                         onClick={() => {
                                             dispatch({ type: "CustomerName", payload: "" });
-                                            dispatch({ type: "CustomerCode", payload: "" });
+                                            dispatch({ type: "Address1", payload: "" });
+                                            dispatch({ type: "Address2", payload: "" });
+                                            dispatch({ type: "Address3", payload: "" });
+                                            dispatch({ type: "PhoneNo", payload: "" });
                                         }}
                                         className="absolute right-2 top-1/2 transform -translate-y-1/2 text-red-500 cursor-pointer"
                                     >
@@ -267,6 +332,7 @@ const ItemMaster = () => {
                                     type="text"
                                     className="EntryInput2Field100 pr-8"
                                     value={state.Address1}
+                                    readOnly
                                     onChange={(e) => dispatch({ type: "Address1", payload: e.target.value })}
                                 />
                                 {state.Address1 && (
@@ -287,6 +353,7 @@ const ItemMaster = () => {
                                     type="text"
                                     className="EntryInput2Field100 pr-8"
                                     value={state.Address2}
+                                    readOnly
                                     onChange={(e) => dispatch({ type: "Address2", payload: e.target.value })}
                                 />
                                 {state.Address2 && (
@@ -307,6 +374,7 @@ const ItemMaster = () => {
                                     type="number"
                                     className="EntryInput2Field100 pr-8"
                                     value={state.PhoneNo}
+                                    readOnly
                                     onChange={(e) => dispatch({ type: "PhoneNo", payload: e.target.value })}
                                 />
                                 {state.PhoneNo && (
@@ -321,6 +389,7 @@ const ItemMaster = () => {
                         </div>
                     </div>
 
+
                     <div className="w-[320px] h-full flex flex-col gap-2 justify-start items-start">
                         <div className="w-full h-[28px] flex justify-start items-center">
                             <label className="w-[170px] h-full flex justify-start items-center text-xs">Purchase No :</label>
@@ -330,7 +399,7 @@ const ItemMaster = () => {
                                     className="EntryInput2Field100 pr-8"
                                     value={state.PurchaseNo}
                                     onChange={(e) => dispatch({ type: "PurchaseNo", payload: e.target.value })}
-                                    readOnly
+                                // readOnly
                                 />
                             </div>
                         </div>
@@ -361,6 +430,7 @@ const ItemMaster = () => {
                     </div>
                 </div>
 
+
                 {/* Table Section */}
                 <div className="w-full p-2 overflow-auto height330">
                     <TableContainer component={Paper}>
@@ -384,21 +454,23 @@ const ItemMaster = () => {
                                             <select
                                                 className="TableItemInput"
                                                 value={row.ItemName}
+                                                onClick={() => { dropDownSelect('GetItems', { pageNumber: 1, pageSize: 10 }, index) }}
                                                 onChange={(e) => {
-                                                    const selectedItem = ItemSelect.find(item => item.name === e.target.value);
+                                                    const selectedItem = ItemSelect.find(item => item.itemname === e.target.value);
                                                     const updatedData = [...tableData];
                                                     updatedData[index] = {
                                                         ...updatedData[index],
                                                         ItemName: e.target.value,
-                                                        ItemCode: selectedItem ? selectedItem.code : ""
+                                                        ItemCode: selectedItem ? selectedItem.itemcode : "",
+                                                        uomname: selectedItem ? selectedItem.uomname : ""
                                                     };
                                                     setTableData(updatedData);
                                                 }}
                                             >
                                                 <option value="">Select Item</option>
                                                 {ItemSelect.map((item) => (
-                                                    <option key={item.id} value={item.name}>
-                                                        {item.name}
+                                                    <option key={item.itemcode} value={item.itemname}>
+                                                        {item.itemname}
                                                     </option>
                                                 ))}
                                             </select>
@@ -431,12 +503,12 @@ const ItemMaster = () => {
                                             <input
                                                 type="text"
                                                 className="TableInput"
-                                                value={row.UOM}
-                                                onChange={(e) => {
-                                                    const updatedData = [...tableData];
-                                                    updatedData[index].UOM = e.target.value;
-                                                    setTableData(updatedData);
-                                                }}
+                                                value={row.uomname}
+                                            // onChange={(e) => {
+                                            //     const updatedData = [...tableData];
+                                            //     updatedData[index].UOM = e.target.value;
+                                            //     setTableData(updatedData);
+                                            // }}
                                             />
                                         </TableCell>
                                         <TableCell className="TableInputTD">
@@ -447,6 +519,7 @@ const ItemMaster = () => {
                                                 onChange={(e) => {
                                                     const updatedData = [...tableData];
                                                     updatedData[index].Rate = e.target.value;
+                                                    updatedData[index].Total = (row.Qty && row.Rate) ? Number(row.Qty || 0) * Number(row.Rate || 0) : 0;
                                                     setTableData(updatedData);
                                                 }}
                                             />
@@ -456,11 +529,7 @@ const ItemMaster = () => {
                                                 type="text"
                                                 className="TableInput"
                                                 value={row.Total}
-                                                onChange={(e) => {
-                                                    const updatedData = [...tableData];
-                                                    updatedData[index].Total = e.target.value;
-                                                    setTableData(updatedData);
-                                                }}
+                                                readOnly
                                             />
                                         </TableCell>
                                     </TableRow>
@@ -480,6 +549,8 @@ const ItemMaster = () => {
                                     <TableCell className="TableInputTDtotal">
                                         <input
                                             type="text"
+                                            value={state.GrandTotal}
+                                            readOnly
                                             className="TableInput1" />
                                     </TableCell>
                                     <TableCell className="TableInputTDtotal">
@@ -532,64 +603,81 @@ const ItemMaster = () => {
                             ></textarea>
                         </div>
                     </div>
-
-                    <div className="w-[320px] h-full flex flex-col gap-2 justify-start items-start">
-                        <div className="w-full h-[28px] flex justify-start items-center">
-                            <div className="w-[170px] h-full flex justify-start items-center">
-                                <label className="h-full flex justify-start items-center text-xs">Tax : </label>
-                                <select
-                                    className="TaxInputForPurchase flex-1 pr-8 appearance-none"
-                                    value={state.TaxName}
-                                    onChange={(e) => {
-                                        const selectedTax = TaxSelect.find(item => item.name === e.target.value);
-                                        dispatch({ type: "TaxName", payload: e.target.value });
-                                        dispatch({ type: "TaxValue", payload: selectedTax ? selectedTax.code : "" });
-                                    }}
-                                >
-                                    <option value=""></option>
-                                    {TaxSelect.map((item) => (
-                                        <option key={item.id} value={item.name}>
-                                            {item.name}
-                                        </option>
-                                    ))}
-                                </select>
+                    <div className="w-auto flex justify-center items-end h-full gap-4">
+                        {/* print and Download */}
+                        <div className="w-full flex justify-end items-center gap-[10px]">
+                            <button
+                                onClick={()=>{handleFileGenerate('print')}}
+                                className="w-[90px] h-[30px] text-sm rounded outline-none bg-sky-600 font-light text-white hover:bg-sky-800"
+                            >
+                                Print
+                            </button>
+                            <button
+                                onClick={()=>{handleFileGenerate('download')}}
+                                className="w-[90px] h-[30px] text-sm rounded outline-none bg-sky-600 font-light text-white hover:bg-sky-800"
+                            >
+                                Download
+                            </button>
+                        </div>
+                        <div className="w-[400px] h-full flex flex-col gap-2 justify-start items-start">
+                            <div className="w-full h-[28px] flex justify-start items-center">
+                                <div className="w-[170px] h-full flex justify-start items-center">
+                                    <label className="h-full flex justify-start items-center text-xs">Tax : </label>
+                                    <select
+                                        className="TaxInputForPurchase flex-1 pr-8 appearance-none"
+                                        value={state.TaxName}
+                                        onClick={() => { dropDownSelect('GetTaxes', { pageNumber: 1, pageSize: 10 }) }}
+                                        onChange={(e) => {
+                                            const selectedTax = TaxSelect.find(item => item.taxname === e.target.value);
+                                            dispatch({ type: "TaxName", payload: e.target.value });
+                                            dispatch({ type: "TaxValue", payload: selectedTax ? selectedTax.taxpercentage : "" });
+                                        }}
+                                    >
+                                        <option value=""></option>
+                                        {TaxSelect.map((item, i) => (
+                                            <option key={i} value={item.taxname}>
+                                                {item.taxname}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <input
+                                    type="number"
+                                    className="EntryInput2Field100 pr-8"
+                                    value={state.TaxValue}
+                                    onChange={(e) => dispatch({ type: "TaxValue", payload: e.target.value })}
+                                />
                             </div>
-                            <input
-                                type="number"
-                                className="EntryInput2Field100 pr-8"
-                                value={state.PurchaseNo}
-                                onChange={(e) => dispatch({ type: "PurchaseNo", payload: e.target.value })}
-                            />
-                        </div>
 
-                        <div className="w-full h-[28px] flex justify-start items-center">
-                            <label className="w-[170px] h-full flex justify-start items-center text-xs">Freight Charge :</label>
-                            <input
-                                type="number"
-                                className="EntryInput2Field100 pr-8"
-                                value={state.FreightCharge}
-                                onChange={(e) => dispatch({ type: "FreightCharge", payload: e.target.value })}
-                            />
-                        </div>
+                            <div className="w-full h-[28px] flex justify-start items-center">
+                                <label className="w-[170px] h-full flex justify-start items-center text-xs">Freight Charge :</label>
+                                <input
+                                    type="number"
+                                    className="EntryInput2Field100 pr-8"
+                                    value={state.FreightCharge}
+                                    onChange={(e) => dispatch({ type: "FreightCharge", payload: e.target.value })}
+                                />
+                            </div>
 
-                        <div className="w-full h-[28px] flex justify-start items-center">
-                            <label className="w-[170px] h-full flex justify-start items-center text-xs">Round Off :</label>
-                            <input
-                                type="number"
-                                className="EntryInput2Field100 pr-8"
-                                value={state.RoundOff}
-                                onChange={(e) => dispatch({ type: "RoundOff", payload: e.target.value })}
-                            />
-                        </div>
+                            <div className="w-full h-[28px] flex justify-start items-center">
+                                <label className="w-[170px] h-full flex justify-start items-center text-xs">Round Off :</label>
+                                <input
+                                    type="number"
+                                    className="EntryInput2Field100 pr-8"
+                                    value={state.RoundOff}
+                                    onChange={(e) => dispatch({ type: "RoundOff", payload: e.target.value })}
+                                />
+                            </div>
 
-                        <div className="w-full h-[28px] flex justify-start items-center">
-                            <label className="w-[170px] h-full flex justify-start items-center text-xs">Invoice Total :</label>
-                            <input
-                                type="number"
-                                className="EntryInput2Field100 pr-8"
-                                value={state.InvoiceTotal}
-                                onChange={(e) => dispatch({ type: "InvoiceTotal", payload: e.target.value })}
-                            />
+                            <div className="w-full h-[28px] flex justify-start items-center">
+                                <label className="w-[170px] h-full flex justify-start items-center text-xs">Invoice Total :</label>
+                                <input
+                                    type="number"
+                                    className="EntryInput2Field100 pr-8"
+                                    value={state.InvoiceTotal}
+                                    onChange={(e) => dispatch({ type: "InvoiceTotal", payload: e.target.value })}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div >
