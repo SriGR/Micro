@@ -228,31 +228,29 @@ const ItemMaster = () => {
 
 
     const handleFileGenerate = async (type) => {
-        console.log(state, 'State');
-        console.log(tableData, 'tableData');
-        console.log(type, 'type');
-    
         const url = '/api/fileGenerate';
         const params = { state, tableData, type };
     
         try {
             const res = await CommonAPISave({ url, params });
     
-            if (res.Output.status.code == 200) {
-                const pdfbuffer = res.Output.data.pdfBuffer
+            if (res.Output.status.code == 200 && res.Output.data.pdfBuffer) {
+                console.log('pdf call')
+                let pdfbuffer = res.Output.data.pdfBuffer;
+    
+                // Convert from a stringified array if necessary
+                if (typeof pdfbuffer === "string") {
+                    pdfbuffer = pdfbuffer.split(",").map(Number);
+                }
+    
                 const byteArray = new Uint8Array(pdfbuffer);
                 const blob = new Blob([byteArray], { type: 'application/pdf' });
                 const pdfUrl = URL.createObjectURL(blob);
                 const uniqueFileName = `invoice_${Date.now()}.pdf`;
     
                 if (type === 'print') {
-                    // Open PDF in a new tab for printing
-                    const printWindow = window.open(pdfUrl, '_blank');
-                    // if (printWindow) {
-                    //     printWindow.onload = () => printWindow.print();
-                    // }
+                    window.open(pdfUrl, '_blank');
                 } else if (type === 'download') {
-                    // Create a link and trigger download
                     const link = document.createElement('a');
                     link.href = pdfUrl;
                     link.download = uniqueFileName;
@@ -261,13 +259,13 @@ const ItemMaster = () => {
                     document.body.removeChild(link);
                 }
             } else {
-                console.error('PDF buffer is missing in the response');
+                console.error('PDF buffer is missing or response is incorrect');
             }
         } catch (error) {
             console.error('Error generating file:', error);
         }
     };
-
+    
     
     return (
         <div className="flex h-screen">
