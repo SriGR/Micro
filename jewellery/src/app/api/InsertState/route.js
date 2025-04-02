@@ -4,49 +4,62 @@ import { getDBConnection } from "../../../../lib/db";
 
 export async function POST(request) {
     try {
-
         const requestBody = await request.json();
-        console.log(typeof requestBody.data)
-        const body = requestBody.data
-      
-        const query = `EXEC InsertState ${body.StateCode}, '${body.StateName}','${body.remarks}','${body.status}','${body.createdby}','${body.activeby}','' ;`
-        console.log(query, 'Query')
-        const pool = await getDBConnection();
-      
-        const qryExec = await pool.request().query(query);
-        console.log(qryExec, 'qryExec')
+        const body = requestBody.data;
 
-        if (qryExec.recordsets && qryExec.recordsets.length > 0) {
-            const result = qryExec.recordsets[0]
-            return NextResponse.json(
-                {
-                    Output: {
-                        status: {
-                            code: 200,
-                            message: "Saved Successfully",
-                        },
-                        data: result,
-                    },
-                },
-                { status: 200 }
-            );
-        } else {
+        const pool = await getDBConnection();
+        const requestDB = pool.request();
+
+        // Bind parameters
+        requestDB.input("statecode", body.StateCode);
+        requestDB.input("statename", body.StateName);
+        requestDB.input("remarks", body.remarks || null);
+        requestDB.input("status", body.status || "Active");
+        requestDB.input("createdby", body.createdby);
+        requestDB.input("activeby", body.activeby || null);
+
+        // Check if statecode already exists
+        const checkQuery = `SELECT statecode FROM ms_state WHERE statecode = @statecode`;
+        const checkResult = await requestDB.query(checkQuery);
+
+        if (checkResult.recordset.length > 0) {
             return NextResponse.json(
                 {
                     Output: {
                         status: {
                             code: 400,
-                            message: "No records found",
+                            message: "FAILED: State Code Already Exists",
                         },
-                        data: [],
+                        data: checkResult.recordset[0], // Return existing statecode
                     },
                 },
-                { status: 200 }
+                { status: 400 }
             );
         }
 
+        // Insert the new state
+        const insertQuery = `
+            INSERT INTO ms_state (statecode, statename, remarks, status, createdby, createdtime, activeby)
+            OUTPUT INSERTED.statecode  -- Return inserted statecode
+            VALUES (@statecode, @statename, @remarks, @status, @createdby, GETDATE(), @activeby);
+        `;
+
+        const insertResult = await requestDB.query(insertQuery);
+
+        return NextResponse.json(
+            {
+                Output: {
+                    status: {
+                        code: 200,
+                        message: "State inserted successfully",
+                    },
+                    data: insertResult.recordset[0], // Return inserted statecode
+                },
+            },
+            { status: 200 }
+        );
+
     } catch (err) {
-        
         return NextResponse.json(
             {
                 Output: {
@@ -57,5 +70,3 @@ export async function POST(request) {
         );
     }
 }
-
-
