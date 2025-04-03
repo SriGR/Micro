@@ -21,10 +21,10 @@ export async function getDBConnection() {
         //console.log(config,'config')
       poolPromise = await sql.connect(config);
       console.log('✅ MSSQL Connected');
-    } catch (err) {
-      // console.error('❌ Database Connection Failed:', err.message);
-      throw err;
+    } catch (error) {
+      console.log(error,'db connection error');
     }
+    
   }
   return poolPromise;
 }
