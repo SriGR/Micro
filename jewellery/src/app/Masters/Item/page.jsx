@@ -193,13 +193,14 @@ const ItemMaster = () => {
             ...state
         }
             await CommonAPISave({ url, params }).then((res) => {
-                if (res.Output.status.code && res.Output.data.length > 0) {
-                    const data = res.Output.data
-                    showToast(res.Output.status.message, "success")
+                if (res.Output && res.Output.status.code == 200 && res.Output.data.length > 0) {
+                    // const data = res.Output.data
+                    showToast(res.Output.status.message, "success");
+                    dispatch({ type: "RESET" });
                 } else {
                     showToast(res.Output.status.message, "warn")
                 }
-                dispatch({ type: "RESET" });
+               
                 tableSelect();
             })
     },[state])

@@ -186,11 +186,12 @@ const TaxMaster = () => {
                
                 if (res.Output.status.code && res.Output.data.length > 0) {
                     const data = res.Output.data
-                    showToast(res.Output.status.message, "success")
+                    showToast(res.Output.status.message, "success");
+                    dispatch({ type: "RESET" });
                 } else {
                     showToast(res.Output.status.message, "warn")
                 }
-                dispatch({ type: "RESET" });
+               
                 tableSelect()
             })
         

@@ -208,7 +208,7 @@ const SupplierMaster = () => {
                     const res = await CommonAPISave({ url, params });
                     console.log(res, 'component');
             
-                    if (res.Output?.status?.code && res.Output?.data?.length > 0) {
+                    if (res.Output?.status?.code == 200 && res.Output?.data?.length > 0) {
                         showToast(res.Output.status.message, "success");
                     } else {
                         showToast(res.Output.status.message, "warn");

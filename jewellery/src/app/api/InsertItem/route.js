@@ -4,20 +4,48 @@ import { getDBConnection } from "../../../../lib/db";
 
 export async function POST(request) {
     try {
-
         const requestBody = await request.json();
-        console.log(typeof requestBody.data)
-        const body = requestBody.data
-       
-        const query = `EXEC InsertItem ${body.ItemCode},'${body.ItemName}','${body.HSNcode}','${body.UOMname}',${body.CategoryCode},${body.TaxCode},'${body.status}','${body.createdby}',''`
-        console.log(query, 'Query')
+        const body = requestBody.data;
+
         const pool = await getDBConnection();
-      
-        const qryExec = await pool.request().query(query);
-        console.log(qryExec, 'qryExec')
+        const requestDB = pool.request();
+
+        requestDB.input("itemcode", body.ItemCode);
+        requestDB.input("itemname", body.ItemName);
+        requestDB.input("hsncode", body.HSNcode);
+        requestDB.input("uomname", body.UOMname);
+        requestDB.input("categorycode", body.CategoryCode);
+        requestDB.input("taxcode", body.TaxCode);
+        requestDB.input("status", body.status);
+        requestDB.input("createdby", body.createdby);
+        requestDB.input("extra", "");
+
+        const checkQuery = `Select itemcode from [ms_item] where itemcode = @itemcode`
+
+        const alreadyExist = await requestDB.query(checkQuery);
+
+        if (alreadyExist.recordset.length > 0) {
+            return NextResponse.json(
+                {
+                    Output: {
+                        status: {
+                            code: 400,
+                            message: "FAILED: Item Code Already Exists",
+                        },
+                        data: [alreadyExist.recordset[0]],
+                    },
+                },
+                { status: 200 }
+            );
+        }
+
+        const query = `INSERT INTO ms_item (itemcode, itemname, hsncode, uomname, categorycode, taxcode, status, createdby)
+                       OUTPUT INSERTED.itemcode  -- Return the inserted itemcode
+                       VALUES (@itemcode, @itemname, @hsncode, @uomname, @categorycode, @taxcode, @status, @createdby);
+`;
+        const qryExec = await requestDB.query(query);
 
         if (qryExec.recordsets && qryExec.recordsets.length > 0) {
-            const result = qryExec.recordsets[0]
             return NextResponse.json(
                 {
                     Output: {
@@ -25,7 +53,7 @@ export async function POST(request) {
                             code: 200,
                             message: "Saved Successfully",
                         },
-                        data: result,
+                        data: [qryExec.recordsets[0]],
                     },
                 },
                 { status: 200 }
@@ -44,9 +72,7 @@ export async function POST(request) {
                 { status: 200 }
             );
         }
-
     } catch (err) {
-        
         return NextResponse.json(
             {
                 Output: {
@@ -57,5 +83,3 @@ export async function POST(request) {
         );
     }
 }
-
-

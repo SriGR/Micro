@@ -30,10 +30,10 @@ export async function POST(request) {
                             code: 400,
                             message: "FAILED: Category Code Already Exists",
                         },
-                        data: checkResult.recordset[0], // Return existing categorycode
+                        data: [checkResult.recordset[0]],
                     },
                 },
-                { status: 400 }
+                { status: 200 }
             );
         }
 
@@ -51,9 +51,9 @@ export async function POST(request) {
                 Output: {
                     status: {
                         code: 200,
-                        message: "Category inserted successfully",
+                        message: "Saved successfully",
                     },
-                    data: insertResult.recordset[0], // Return inserted categorycode
+                    data: [insertResult.recordset[0]], // Return inserted categorycode
                 },
             },
             { status: 200 }

@@ -30,10 +30,10 @@ export async function POST(request) {
                             code: 400,
                             message: "FAILED: State Code Already Exists",
                         },
-                        data: checkResult.recordset[0], // Return existing statecode
+                        data: [checkResult.recordset[0]], // Return existing statecode
                     },
                 },
-                { status: 400 }
+                { status: 200 }
             );
         }
 
@@ -51,9 +51,9 @@ export async function POST(request) {
                 Output: {
                     status: {
                         code: 200,
-                        message: "State inserted successfully",
+                        message: "Saved successfully",
                     },
-                    data: insertResult.recordset[0], // Return inserted statecode
+                    data: [insertResult.recordset[0]], // Return inserted statecode
                 },
             },
             { status: 200 }

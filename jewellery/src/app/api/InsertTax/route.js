@@ -4,23 +4,44 @@ import { getDBConnection } from "../../../../lib/db";
 
 export async function POST(request) {
     try {
-
         const requestBody = await request.json();
-        console.log(typeof requestBody.data)
-        const body = requestBody.data
-        console.log(body,'body')
-    
-
-        const query = `EXEC InsertTax ${body.TaxCode},'${body.TaxName}', ${body.TaxPercentage}, 'Active','${body.createdby}', ''`;
-        console.log(query, 'Query')
+        const body = requestBody.data;
 
         const pool = await getDBConnection();
+        const requestDB = pool.request();
 
-        const qryExec = await pool.request().query(query);
-        console.log(qryExec, 'qryExec')
+        requestDB.input("taxcode", body.TaxCode);
+        requestDB.input("taxname", body.TaxName);
+        requestDB.input("taxpercentage", body.TaxPercentage);
+        requestDB.input("status", "Active");
+        requestDB.input("createdby", body.createdby || "Admin");
+
+        const checkQuery = `SELECT taxcode FROM ms_tax WHERE taxcode = @taxcode`;
+        const checkResult = await requestDB.query(checkQuery);
+
+        if (checkResult.recordset.length > 0) {
+            return NextResponse.json(
+                {
+                    Output: {
+                        status: {
+                            code: 400,
+                            message: "FAILED: Tax Code Already Exists",
+                        },
+                        data: checkResult.recordset[0],
+                    },
+                },
+                { status: 200 }
+            );
+        }
+
+        // Execute stored procedure
+        const query = `INSERT INTO ms_tax (taxcode, taxname, taxpercentage, status, createdby)
+                       OUTPUT INSERTED.taxcode  -- Return inserted taxcode
+                       VALUES (@taxcode, @taxname, @taxpercentage, @status, @createdby);
+`;
+        const qryExec = await requestDB.query(query);
 
         if (qryExec.recordsets && qryExec.recordsets.length > 0) {
-            const result = qryExec.recordsets[0]
             return NextResponse.json(
                 {
                     Output: {
@@ -28,7 +49,7 @@ export async function POST(request) {
                             code: 200,
                             message: "Saved Successfully",
                         },
-                        data: result,
+                        data: qryExec.recordsets[0],
                     },
                 },
                 { status: 200 }
@@ -44,12 +65,10 @@ export async function POST(request) {
                         data: [],
                     },
                 },
-                { status: 200 }
+                { status: 400 }
             );
         }
-
     } catch (err) {
-        
         return NextResponse.json(
             {
                 Output: {
@@ -60,5 +79,3 @@ export async function POST(request) {
         );
     }
 }
-
-

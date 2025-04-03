@@ -4,68 +4,57 @@ import { getDBConnection } from "../../../../lib/db";
 
 export async function POST(request) {
     try {
-
         const requestBody = await request.json();
-        console.log(typeof requestBody.data)
-        const body = requestBody.data
+        const body = requestBody.data;
 
-        const x = {
-            customername: body.CustomerName ? `'${body.CustomerName}'` : '',
-            address1: body.Address1 ? `'${body.Address1}'` : '',
-            address2: body.Address2 ? `'${body.Address2}'` : '',
-            address3: body.Address3 ? `'${body.Address3}'` : '',
-            phonenumber: body.PhoneNo ? `'${body.PhoneNo}'` : '',
-            gstnumber: body.GstNo ? `'${body.GstNo}'` : '',
-            openingcredit: body.OpCreditBalance ? `${body.OpCreditBalance}` : '',
-            openingdebit: body.OpDebitBalance ? `${body.OpDebitBalance}` : '',
-            balance: 0.00,
-            statecode: body.StateCode ? `'${body.StateCode}'` : '',
-            remarks: body.remarks ? `'${body.remarks}'` : '',
-            createdby: body.createdby ? `'${body.createdby}'` : `'Admin'`,
-            createdtime: body.createdtime ? `'${body.createdtime}'` : '',
-            status: 1 ,
-            activeby: body.activeby ? `'${body.activeby}'` : `'Admin'`
-        };
-        
-     
-        const query = `EXEC InsertSupplier ${x.customername},${x.address1},${x.address2},${x.address3},${x.phonenumber},${x.gstnumber},${x.openingcredit},${x.openingdebit},${x.balance},1,'Active',${x.createdby},''`
-        console.log(query, 'Query')
         const pool = await getDBConnection();
-      
-        const qryExec = await pool.request().query(query);
-        console.log(qryExec, 'qryExec')
+        const requestDB = pool.request();
 
-        if (qryExec.recordsets && qryExec.recordsets.length > 0) {
-            const result = qryExec.recordsets[0]
-            return NextResponse.json(
-                {
-                    Output: {
-                        status: {
-                            code: 200,
-                            message: "Saved Successfully",
-                        },
-                        data: result,
+        // Convert OpCreditBalance and OpDebitBalance to numbers
+        const openingCredit = parseFloat(body.OpCreditBalance) || 0;
+        const openingDebit = parseFloat(body.OpDebitBalance) || 0;
+        const balance = openingCredit - openingDebit;
+
+        // Bind parameters to avoid SQL injection
+        requestDB.input("customername", body.CustomerName || "");
+        requestDB.input("address1", body.Address1 || "");
+        requestDB.input("address2", body.Address2 || "");
+        requestDB.input("address3", body.Address3 || "");
+        requestDB.input("phonenumber", body.PhoneNo || "");
+        requestDB.input("gstnumber", body.GstNo || "");
+        requestDB.input("openingcredit", openingCredit);
+        requestDB.input("openingdebit", openingDebit);
+        requestDB.input("balance", balance);
+        requestDB.input("statecode", body.StateCode || "");
+        requestDB.input("status", 1);
+        requestDB.input("createdby", body.createdby || "Admin");
+        requestDB.input("createdtime", body.createdtime || "");
+        requestDB.input("activeby", body.activeby || "Admin");
+
+
+        // INSERT Query
+        const insertQuery = `
+            INSERT INTO ms_suppliermaster (customername, address1, address2, address3, phonenumber, gstnumber, openingcredit, openingdebit, balance, statecode, status, createdby)
+            OUTPUT INSERTED.customername  -- Return inserted suppliercode
+            VALUES (@customername, @address1, @address2, @address3, @phonenumber, @gstnumber, @openingcredit, @openingdebit, @balance, @statecode, @status, @createdby);
+        `;
+
+        const insertResult = await requestDB.query(insertQuery);
+
+        return NextResponse.json(
+            {
+                Output: {
+                    status: {
+                        code: 200,
+                        message: "Saved successfully",
                     },
+                    data: [insertResult.recordset[0]], 
                 },
-                { status: 200 }
-            );
-        } else {
-            return NextResponse.json(
-                {
-                    Output: {
-                        status: {
-                            code: 400,
-                            message: "No records found",
-                        },
-                        data: [],
-                    },
-                },
-                { status: 200 }
-            );
-        }
+            },
+            { status: 200 }
+        );
 
     } catch (err) {
-        
         return NextResponse.json(
             {
                 Output: {
@@ -76,6 +65,3 @@ export async function POST(request) {
         );
     }
 }
-
-
-
