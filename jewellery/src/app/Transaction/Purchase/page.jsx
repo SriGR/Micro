@@ -18,6 +18,8 @@ import Paper from "@mui/material/Paper";
 import { ToastContainer } from "react-toastify";
 import { SlHome } from "react-icons/sl";
 import CommonAPISave from "app/Components/CommonAPISave";
+import { RiMenuFold2Line } from "react-icons/ri";
+import { RiMenuFoldLine } from "react-icons/ri";
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
     const [openSection, setOpenSection] = useState(null);
@@ -27,7 +29,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     };
 
     return (
-        <div className={`bg-gray-900 text-white w-[230px] min-h-screen p-5 transition-all ${isOpen ? "block" : "hidden"} md:block`}>
+        <div className={`bg-gray-900 text-white w-[230px] min-h-screen p-5 transition-all ${isOpen ? "block" : "hidden"} `}>
             <div className="flex justify-between items-center">
                 <Image src="/images/BrandLogo.jpg" alt="Brand Logo" width={170} height={0} className="w-[120px] sm:w-[140px] md:w-[170px]" />
                 <button onClick={toggleSidebar} className="md:hidden">
@@ -95,6 +97,9 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                     </button>
                     {openSection === "Reports" && (
                         <ul className="mt-1 space-y-1">
+                            <li><Link href="/Reports/PurchaseSummary"
+                                className="flex items-center font-light text-[14px] p-2 hover:bg-gray-700 rounded">
+                                <HiBars3BottomLeft className="w-4 h-4 mr-3" /> Purchase Summary</Link></li>
                         </ul>
                     )}
                 </li>
@@ -168,11 +173,10 @@ const initialState = {
 };
 
 const ItemMaster = () => {
-    const [isOpen, setIsOpen] = useState(false);
+    const [isOpen, setIsOpen] = useState(true);
     const toggleSidebar = () => setIsOpen(!isOpen);
 
     const [state, dispatch] = useReducer(ItemMasterReducers, initialState);
-    console.log(state, 'State')
 
     const [tableData, setTableData] = useState([]);
 
@@ -207,7 +211,7 @@ const ItemMaster = () => {
         }
         await CommonAPISave({ url, params }).then((res) => {
             if (res.Output.status.code && res.Output.data.length > 0) {
-                const data = res.Output.data    
+                const data = res.Output.data
                 if (endPoint == 'GetItems') {
                     setItemSelect(data)
                 } else if (endPoint == 'getSupplier') {
@@ -230,24 +234,23 @@ const ItemMaster = () => {
     const handleFileGenerate = async (type) => {
         const url = '/api/fileGenerate';
         const params = { state, tableData, type };
-    
+
         try {
             const res = await CommonAPISave({ url, params });
-    
+
             if (res.Output.status.code == 200 && res.Output.data.pdfBuffer) {
-                console.log('pdf call')
                 let pdfbuffer = res.Output.data.pdfBuffer;
-    
+
                 // Convert from a stringified array if necessary
                 if (typeof pdfbuffer === "string") {
                     pdfbuffer = pdfbuffer.split(",").map(Number);
                 }
-    
+
                 const byteArray = new Uint8Array(pdfbuffer);
                 const blob = new Blob([byteArray], { type: 'application/pdf' });
                 const pdfUrl = URL.createObjectURL(blob);
                 const uniqueFileName = `invoice_${Date.now()}.pdf`;
-    
+
                 if (type === 'print') {
                     window.open(pdfUrl, '_blank');
                 } else if (type === 'download') {
@@ -265,8 +268,8 @@ const ItemMaster = () => {
             console.error('Error generating file:', error);
         }
     };
-    
-    
+
+
     return (
         <div className="flex h-screen">
             <ToastContainer />
@@ -275,14 +278,16 @@ const ItemMaster = () => {
 
             {/* Main Content Area */}
             <section className="flex-1 h-full">
-                <div className="w-full h-10 bg-gray-200 flex items-center px-2 text-black">
+                <div className="w-full h-10 bg-gray-200 flex items-center px-2 text-black gap-2">
+                    {isOpen ? <RiMenuFoldLine onClick={toggleSidebar} className="w-5 h-5 cursor-pointer" /> :
+                        <RiMenuFold2Line onClick={toggleSidebar} className="w-5 h-5 cursor-pointer" />}
                     <span className="text-sm font-medium">Purchase Entry</span>
                 </div>
 
                 <div className="w-full h-36 flex justify-between items-start p-2">
                     <div className="w-[280px] h-full flex flex-col gap-2 justify-start items-start">
                         <div className="relative w-full h-[28px] flex justify-start items-center">
-                            <label className="w-[100px] h-full flex justify-start items-center text-xs">Customer :</label>
+                            <label className="w-[100px] h-full flex justify-start items-center text-xs">Supplier :</label>
                             <div className="relative w-full">
                                 <select
                                     className="InputStyle w-full pr-8 appearance-none"
@@ -298,7 +303,7 @@ const ItemMaster = () => {
 
                                     }}
                                 >
-                                    <option value="">Select Customer</option>
+                                    <option value="">Select Supplier</option>
                                     {CustomerSelect.map((item, index) => (
                                         <option key={index} value={item.customername}>
                                             {item.customername}
@@ -605,13 +610,13 @@ const ItemMaster = () => {
                         {/* print and Download */}
                         <div className="w-full flex justify-end items-center gap-[10px]">
                             <button
-                                onClick={()=>{handleFileGenerate('print')}}
+                                onClick={() => { handleFileGenerate('print') }}
                                 className="w-[90px] h-[30px] text-sm rounded outline-none bg-sky-600 font-light text-white hover:bg-sky-800"
                             >
                                 Print
                             </button>
                             <button
-                                onClick={()=>{handleFileGenerate('download')}}
+                                onClick={() => { handleFileGenerate('download') }}
                                 className="w-[90px] h-[30px] text-sm rounded outline-none bg-sky-600 font-light text-white hover:bg-sky-800"
                             >
                                 Download

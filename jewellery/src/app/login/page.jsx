@@ -11,29 +11,28 @@ function Page() {
     const handleLogin = (e) => {
         e.preventDefault();
         const param = {
-            "data":{
-              "UserName":user.LoginID,
-              "Password":user.Password
+            "data": {
+                "UserName": user.LoginID,
+                "Password": user.Password
             }
-          }
+        }
 
         fetch('/api/login', {
             method: 'POST',
             body: JSON.stringify(param)
-        }).then((res)=>{return res.json()}).then(async(res) => {
+        }).then((res) => { return res.json() }).then(async (res) => {
             const data = await res.Output
-            console.log(data,'RESS')
-            if(res.Output.status.code == 200){
+            if (res.Output.status.code == 200) {
                 toast.success(res.Output.status.message)
                 localStorage.setItem('userId', 1)
-               router.push('/dashboard')
-            }else{
+                router.push('/dashboard')
+            } else {
                 toast.warning(res.Output.status.message)
             }
-        // toast.error('Error message');
-        // toast.warning('Warning message');
-        // toast.info('Info message');
-        }).catch((err)=>{
+            // toast.error('Error message');
+            // toast.warning('Warning message');
+            // toast.info('Info message');
+        }).catch((err) => {
             toast.warning(err.message);
         })
 
@@ -66,10 +65,10 @@ function Page() {
                 {/* Login Form */}
                 <form onSubmit={handleLogin} autoComplete="off" className="space-y-6 px-4 sm:px-0 mb-[20px]">
                     {/* Username Input */}
-                    
+
                     <div className="relative">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="LoginID">
-                    LoginID
+                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="LoginID">
+                            LoginID
                         </label>
                         <input
                             id="LoginID"
@@ -85,9 +84,9 @@ function Page() {
 
                     {/* Password Input */}
                     <div className="relative">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
-        Password
-      </label>
+                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
+                            Password
+                        </label>
                         <input
                             id="password"
                             type="password"
@@ -100,7 +99,7 @@ function Page() {
                         />
                     </div>
 
-                   
+
 
                     {/* Submit Button */}
                     <button

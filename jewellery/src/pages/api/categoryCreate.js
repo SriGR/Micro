@@ -8,7 +8,7 @@ export default async function handler(req, res) {
 
   try {
     await connectDB();
-    const { categorycode, categoryname,remarks,createdby,createdtime,status,activeby } = req.body; // Use req.body instead of req.json()
+    const { categorycode, categoryname, remarks, createdby, createdtime, status, activeby } = req.body; // Use req.body instead of req.json()
 
     const result = await sql.query`
       EXEC InsertCategory 
@@ -17,7 +17,6 @@ export default async function handler(req, res) {
         ${remarks},
         ${createdby},
         ${createdtime},${status},${activeby}`;
-console.log(result,"20")
     return res.status(200).json({ success: true, data: result.recordset });
   } catch (error) {
     return res.status(400).json({ success: false, error: error.message });

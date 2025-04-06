@@ -1,5 +1,5 @@
 "use client";
-import { useState, useReducer ,useEffect, useCallback} from "react";
+import { useState, useReducer, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { X, Home, LogOut, ChevronDown } from "lucide-react";
 import Link from "next/link";
@@ -18,6 +18,8 @@ import showToast from '../../../utils/toastService';
 import { ToastContainer } from "react-toastify";
 import { SlHome } from "react-icons/sl";
 import CommonAPISave from "../../Components/CommonAPISave";
+import { RiMenuFold2Line } from "react-icons/ri";
+import { RiMenuFoldLine } from "react-icons/ri";
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
     const [openSection, setOpenSection] = useState(null);
@@ -27,7 +29,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     };
 
     return (
-        <div className={`bg-gray-900 text-white w-[230px] min-h-screen p-5 transition-all ${isOpen ? "block" : "hidden"} md:block`}>
+        <div className={`bg-gray-900 text-white w-[230px] min-h-screen p-5 transition-all ${isOpen ? "block" : "hidden"} `}>
             <div className="flex justify-between items-center">
                 <Image src="/images/BrandLogo.jpg" alt="Brand Logo" width={170} height={0} className="w-[120px] sm:w-[140px] md:w-[170px]" />
                 <button onClick={toggleSidebar} className="md:hidden">
@@ -95,6 +97,9 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                     </button>
                     {openSection === "Reports" && (
                         <ul className="mt-1 space-y-1">
+                            <li><Link href="/Reports/PurchaseSummary"
+                                className="flex items-center font-light text-[14px] p-2 hover:bg-gray-700 rounded">
+                                <HiBars3BottomLeft className="w-4 h-4 mr-3" /> Purchase Summary</Link></li>
                         </ul>
                     )}
                 </li>
@@ -154,30 +159,34 @@ const initialState = {
 };
 
 const ItemMaster = () => {
-    const [isOpen, setIsOpen] = useState(false);
+    const [isOpen, setIsOpen] = useState(true);
     const toggleSidebar = () => setIsOpen(!isOpen);
 
     const [state, dispatch] = useReducer(ItemMasterReducers, initialState);
-   
+
     const [tableData, setTableData] = useState([]);
-    const [Categories,setCategories]=useState([]);
-    const [Taxes,setTaxes]=useState([])
-    
+    const [Categories, setCategories] = useState([]);
+    const [Taxes, setTaxes] = useState([])
+
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
     const ValidateFunction = () => {
         if (!state.ItemCode) {
-            return showToast("Kindly enter the Item Code", "warn")
+            window.alert("Kindly enter the Item Code");
+            return;
         }
         else if (!state.ItemName) {
-            return showToast("Kindly enter the Item Name", "warn")
+            window.alert("Kindly enter the Item Name");
+            return;
         }
         else if (!state.CategoryCode) {
-            return showToast("Kindly select the Category", "warn")
+            window.alert("Kindly select the Category");
+            return;
         }
         else if (!state.TaxCode) {
-            return showToast("Kindly select the Tax", "warn")
+            window.alert("Kindly select the Tax");
+            return;
         }
         saveFunction();
     }
@@ -187,64 +196,62 @@ const ItemMaster = () => {
         dispatch({ type: "RESET" });
     };
 
-     const saveFunction = useCallback(async () => {
+    const saveFunction = useCallback(async () => {
         const url = '/api/InsertItem';
         const params = {
             ...state
         }
-            await CommonAPISave({ url, params }).then((res) => {
-                if (res.Output && res.Output.status.code == 200 && res.Output.data.length > 0) {
-                    // const data = res.Output.data
-                    showToast(res.Output.status.message, "success");
-                    dispatch({ type: "RESET" });
-                } else {
-                    showToast(res.Output.status.message, "warn")
-                }
-               
-                tableSelect();
-            })
-    },[state])
-    
-        const tableSelect = useCallback(async () => {
-            const url = '/api/GetItems';
-            const params = {
-                    status: 'Active',
-                    pageNumber: 1,
-                    pageSize: 10
+        await CommonAPISave({ url, params }).then((res) => {
+            if (res.Output && res.Output.status.code == 200 && res.Output.data.length > 0) {
+                // const data = res.Output.data
+                showToast(res.Output.status.message, "success");
+                dispatch({ type: "RESET" });
+            } else {
+                showToast(res.Output.status.message, "warn")
             }
-            await CommonAPISave({ url, params }).then((res) => {
-                
-                if (res.Output.status.code && res.Output.data.length > 0) {
-                    const data = res.Output.data
-                    setTableData(data)
-                }
-            })
-        },[])
-    
-        useEffect(() => {
-            tableSelect()
-        }, [])
 
-        const dropDownSelect = async(endPoint,TablePagination)=>{
-            const url = `/api/${endPoint}`;
-            const params = {
-                    status: 'Active',
-                    pageNumber: TablePagination.pageNumber,
-                    pageSize: TablePagination.pageSize
-            }
-            await CommonAPISave({ url, params }).then((res) => {
-                console.log(res, 'component')
-                if (res.Output.status.code && res.Output.data.length > 0) {
-                    const data = res.Output.data
-                    console.log(data, 'data')
-                    if(endPoint == 'GetCategories'){
-                        setCategories(data)
-                    }else if(endPoint == 'GetTaxes'){
-                        setTaxes(data)
-                    }
-                }
-            })
+            tableSelect();
+        })
+    }, [state])
+
+    const tableSelect = useCallback(async () => {
+        const url = '/api/GetItems';
+        const params = {
+            status: 'Active',
+            pageNumber: 1,
+            pageSize: 10
         }
+        await CommonAPISave({ url, params }).then((res) => {
+
+            if (res.Output.status.code && res.Output.data.length > 0) {
+                const data = res.Output.data
+                setTableData(data)
+            }
+        })
+    }, [])
+
+    useEffect(() => {
+        tableSelect()
+    }, [])
+
+    const dropDownSelect = async (endPoint, TablePagination) => {
+        const url = `/api/${endPoint}`;
+        const params = {
+            status: 'Active',
+            pageNumber: TablePagination.pageNumber,
+            pageSize: TablePagination.pageSize
+        }
+        await CommonAPISave({ url, params }).then((res) => {
+            if (res.Output.status.code && res.Output.data.length > 0) {
+                const data = res.Output.data
+                if (endPoint == 'GetCategories') {
+                    setCategories(data)
+                } else if (endPoint == 'GetTaxes') {
+                    setTaxes(data)
+                }
+            }
+        })
+    }
 
     return (
         <div className="flex h-screen">
@@ -254,7 +261,9 @@ const ItemMaster = () => {
 
             {/* Main Content Area */}
             <section className="flex-1 h-full">
-                <div className="w-full h-10 bg-gray-200 flex items-center px-2 text-black">
+                <div className="w-full h-10 bg-gray-200 flex items-center px-2 text-black gap-2">
+                    {isOpen ? <RiMenuFoldLine onClick={toggleSidebar} className="w-5 h-5 cursor-pointer" /> :
+                        <RiMenuFold2Line onClick={toggleSidebar} className="w-5 h-5 cursor-pointer" />}
                     <span className="text-sm font-medium">Item Master</span>
                 </div>
                 <div className="w-full h-[175px] p-2 pt-4">
@@ -312,7 +321,7 @@ const ItemMaster = () => {
                                         dispatch({ type: "CategoryName", payload: e.target.value });
                                         dispatch({ type: "CategoryCode", payload: selectedCategory ? selectedCategory.categorycode : "" });
                                     }}
-                                    onClick={()=>{ dropDownSelect('GetCategories',{pageNumber:1,pageSize:10})}}
+                                    onClick={() => { dropDownSelect('GetCategories', { pageNumber: 1, pageSize: 10 }) }}
                                 >
                                     <option value="">Select Category</option>
                                     {Categories.map((item) => (
@@ -368,7 +377,7 @@ const ItemMaster = () => {
                                         dispatch({ type: "TaxName", payload: e.target.value });
                                         dispatch({ type: "TaxCode", payload: selectedTax ? selectedTax.taxcode : "" });
                                     }}
-                                    onClick={()=>{ dropDownSelect('GetTaxes',{pageNumber:1,pageSize:10})}}
+                                    onClick={() => { dropDownSelect('GetTaxes', { pageNumber: 1, pageSize: 10 }) }}
                                 >
                                     <option value="">Select Tax</option>
                                     {Taxes.map((item) => (

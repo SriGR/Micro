@@ -1,5 +1,5 @@
 "use client";
-import { useState, useReducer,useEffect, useCallback} from "react";
+import { useState, useReducer, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { X, Home, LogOut, ChevronDown } from "lucide-react";
 import Link from "next/link";
@@ -18,6 +18,8 @@ import showToast from '../../../utils/toastService';
 import { ToastContainer } from "react-toastify";
 import { SlHome } from "react-icons/sl";
 import CommonAPISave from "../../Components/CommonAPISave";
+import { RiMenuFold2Line } from "react-icons/ri";
+import { RiMenuFoldLine } from "react-icons/ri";
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
     const [openSection, setOpenSection] = useState(null);
@@ -27,7 +29,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     };
 
     return (
-        <div className={`bg-gray-900 text-white w-[230px] min-h-screen p-5 transition-all ${isOpen ? "block" : "hidden"} md:block`}>
+        <div className={`bg-gray-900 text-white w-[230px] min-h-screen p-5 transition-all ${isOpen ? "block" : "hidden"} `}>
             <div className="flex justify-between items-center">
                 <Image src="/images/BrandLogo.jpg" alt="Brand Logo" width={170} height={0} className="w-[120px] sm:w-[140px] md:w-[170px]" />
                 <button onClick={toggleSidebar} className="md:hidden">
@@ -95,6 +97,9 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                     </button>
                     {openSection === "Reports" && (
                         <ul className="mt-1 space-y-1">
+                            <li><Link href="/Reports/PurchaseSummary"
+                                className="flex items-center font-light text-[14px] p-2 hover:bg-gray-700 rounded">
+                                <HiBars3BottomLeft className="w-4 h-4 mr-3" /> Purchase Summary</Link></li>
                         </ul>
                     )}
                 </li>
@@ -142,7 +147,7 @@ const ItemMasterReducers = (state, action) => {
 };
 
 const initialState = {
-    CustomerName: "",
+    SupplierName: "",
     Address1: "",
     Address2: "",
     Address3: "",
@@ -155,25 +160,26 @@ const initialState = {
 };
 
 const SupplierMaster = () => {
-    const [isOpen, setIsOpen] = useState(false);
+    const [isOpen, setIsOpen] = useState(true);
     const toggleSidebar = () => setIsOpen(!isOpen);
 
     const [state, dispatch] = useReducer(ItemMasterReducers, initialState);
-    console.log(state, "state");
 
-    const [StateSelect,setStateSelect]=useState([])
-    
+    const [StateSelect, setStateSelect] = useState([])
+
     const [tableData, setTableData] = useState([]);
 
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
     const ValidateFunction = () => {
-        if (!state.CustomerName) {
-            return showToast("Kindly enter the Customer Code", "warn")
+        if (!state.SupplierName) {
+            window.alert("Kindly enter the Supplier Code");
+            return;
         }
         else if (!state.StateCode) {
-            return showToast("Kindly select the State", "warn")
+            window.alert("Kindly select the State");
+            return;
         }
         saveFunction();
     }
@@ -182,62 +188,57 @@ const SupplierMaster = () => {
         dispatch({ type: "RESET" });
     };
 
-       const dropDownSelect = async(endPoint,TablePagination)=>{
-                const url = `/api/${endPoint}`;
-                const params = {
-                        status: 'Active',
-                        pageNumber: TablePagination.pageNumber,
-                        pageSize: TablePagination.pageSize
+    const dropDownSelect = async (endPoint, TablePagination) => {
+        const url = `/api/${endPoint}`;
+        const params = {
+            status: 'Active',
+            pageNumber: TablePagination.pageNumber,
+            pageSize: TablePagination.pageSize
+        }
+        await CommonAPISave({ url, params }).then((res) => {
+            if (res.Output.status.code && res.Output.data.length > 0) {
+                const data = res.Output.data
+                if (endPoint == 'GetStates') {
+                    setStateSelect(data)
                 }
-                await CommonAPISave({ url, params }).then((res) => {
-                    console.log(res, 'component')
-                    if (res.Output.status.code && res.Output.data.length > 0) {
-                        const data = res.Output.data
-                        console.log(data, 'data')
-                        if(endPoint == 'GetStates'){
-                            setStateSelect(data)
-                        }
-                    }
-                })
             }
+        })
+    }
 
-            const saveFunction = useCallback(async () => {
-                const url = '/api/InsertSupplier';         
-                const params = { ...state };
-                try {
-                    const res = await CommonAPISave({ url, params });
-                    console.log(res, 'component');
-            
-                    if (res.Output?.status?.code == 200 && res.Output?.data?.length > 0) {
-                        showToast(res.Output.status.message, "success");
-                    } else {
-                        showToast(res.Output.status.message, "warn");
-                    }
-                    dispatch({ type: "RESET" });
-                    tableSelect();
-                } catch (error) {
-                    console.error("Error saving supplier:", error);
-                    showToast("Failed to save. Please try again.", "error");
-                }
-            }, [state]);
-            
+    const saveFunction = useCallback(async () => {
+        const url = '/api/InsertSupplier';
+        const params = { ...state };
+        try {
+            const res = await CommonAPISave({ url, params });
+
+            if (res.Output?.status?.code == 200 && res.Output?.data?.length > 0) {
+                showToast(res.Output.status.message, "success");
+            } else {
+                showToast(res.Output.status.message, "warn");
+            }
+            dispatch({ type: "RESET" });
+            tableSelect();
+        } catch (error) {
+            console.error("Error saving supplier:", error);
+            showToast("Failed to save. Please try again.", "error");
+        }
+    }, [state]);
+
 
     const tableSelect = useCallback(async () => {
         const url = '/api/getSupplier';
         const params = {
-                pageNumber: 1,
-                pageSize: 10
-            
+            pageNumber: 1,
+            pageSize: 10
+
         }
         await CommonAPISave({ url, params }).then((res) => {
-            console.log(res, 'component')
             if (res.Output.status.code && res.Output.data.length > 0) {
                 const data = res.Output.data
-                console.log(data, 'data')
                 setTableData(data)
             }
         })
-    },[])
+    }, [])
 
     useEffect(() => {
         tableSelect()
@@ -253,24 +254,26 @@ const SupplierMaster = () => {
 
             {/* Main Content Area */}
             <section className="flex-1 h-full">
-                <div className="w-full h-10 bg-gray-200 flex items-center px-2 text-black text-black">
+                <div className="w-full h-10 bg-gray-200 flex items-center px-2 text-black text-black gap-2">
+                    {isOpen ? <RiMenuFoldLine onClick={toggleSidebar} className="w-5 h-5 cursor-pointer" /> :
+                        <RiMenuFold2Line onClick={toggleSidebar} className="w-5 h-5 cursor-pointer" />}
                     <span className="text-sm font-medium">Supplier Master</span>
                 </div>
                 <div className="w-full h-[235px] p-2 pt-4">
                     <div className="w-full flex justify-start items-center flex-wrap gap-[10px]">
                         <div className="relative w-[calc(25%-10px)] h-auto flex flex-col justify-start items-start gap-[6px]">
-                            <label className="w-full text-xs">Customer Name:</label>
+                            <label className="w-full text-xs">Supplier Name:</label>
                             <div className="relative w-full">
                                 <input
                                     type="text"
                                     className="EntryInputField100 pr-8"
-                                    placeholder="Enter Customer Name"
-                                    value={state.CustomerName}
-                                    onChange={(e) => dispatch({ type: "CustomerName", payload: e.target.value })}
+                                    placeholder="Enter Supplier Name"
+                                    value={state.SupplierName}
+                                    onChange={(e) => dispatch({ type: "SupplierName", payload: e.target.value })}
                                 />
-                                {state.CustomerName && (
+                                {state.SupplierName && (
                                     <span
-                                        onClick={() => dispatch({ type: "CustomerName", payload: "" })}
+                                        onClick={() => dispatch({ type: "SupplierName", payload: "" })}
                                         className="absolute right-2 top-1/2 transform -translate-y-1/2 text-red-500 cursor-pointer"
                                     >
                                         <MdClear />
@@ -390,7 +393,7 @@ const SupplierMaster = () => {
                                 <select
                                     className="InputStyle w-full pr-8 appearance-none"
                                     value={state.StateName}
-                                    onClick={()=>{ dropDownSelect('GetStates',{pageNumber:1,pageSize:10})}}
+                                    onClick={() => { dropDownSelect('GetStates', { pageNumber: 1, pageSize: 10 }) }}
                                     onChange={(e) => {
                                         const selectedCategory = StateSelect.find(item => item.statename === e.target.value);
                                         dispatch({ type: "StateName", payload: e.target.value });
@@ -484,7 +487,7 @@ const SupplierMaster = () => {
                             <TableHead>
                                 <TableRow>
                                     <TableCell>Suppliercode</TableCell>
-                                    <TableCell>Customer Name</TableCell>
+                                    <TableCell>Supplier Name</TableCell>
                                     <TableCell>Address 1</TableCell>
                                     <TableCell>Address 2</TableCell>
                                     <TableCell>Address 3</TableCell>
@@ -500,7 +503,7 @@ const SupplierMaster = () => {
                                 {(tableData && tableData.length > 0) && tableData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
                                     <TableRow>
                                         <TableCell>{row.suppliercode}</TableCell>
-                                        <TableCell>{row.customername}</TableCell>
+                                        <TableCell>{row.SupplierName}</TableCell>
                                         <TableCell>{row.address1}</TableCell>
                                         <TableCell>{row.address2}</TableCell>
                                         <TableCell>{row.address3}</TableCell>

@@ -18,8 +18,12 @@ import showToast from '../../../utils/toastService';
 import { ToastContainer } from "react-toastify";
 import { SlHome } from "react-icons/sl";
 import CommonAPISave from "../../Components/CommonAPISave";
+import { RiMenuFold2Line } from "react-icons/ri";
+import { RiMenuFoldLine } from "react-icons/ri";
+
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
+
     const [openSection, setOpenSection] = useState(null);
 
     const toggleSection = (section) => {
@@ -27,7 +31,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     };
 
     return (
-        <div className={`bg-gray-900 text-white w-[230px] min-h-screen p-5 transition-all ${isOpen ? "block" : "hidden"} md:block`}>
+        <div className={`bg-gray-900 text-white w-[230px] min-h-screen p-5 transition-all ${isOpen ? "block" : "hidden"}`}>
             <div className="flex justify-between items-center">
                 <Image src="/images/BrandLogo.jpg" alt="Brand Logo" width={170} height={0} className="w-[120px] sm:w-[140px] md:w-[170px]" />
                 <button onClick={toggleSidebar} className="md:hidden">
@@ -95,6 +99,9 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                     </button>
                     {openSection === "Reports" && (
                         <ul className="mt-1 space-y-1">
+                            <li><Link href="/Reports/PurchaseSummary"
+                                className="flex items-center font-light text-[14px] p-2 hover:bg-gray-700 rounded">
+                                <HiBars3BottomLeft className="w-4 h-4 mr-3" /> Purchase Summary</Link></li>
                         </ul>
                     )}
                 </li>
@@ -144,15 +151,14 @@ const CategoryMasterReducers = (state, action) => {
 const initialState = {
     CategoryCode: "",
     CategoryName: "",
-    status:"Active"
+    status: "Active"
 };
 
 const CategoryMaster = () => {
-    const [isOpen, setIsOpen] = useState(false);
+    const [isOpen, setIsOpen] = useState(true);
     const toggleSidebar = () => setIsOpen(!isOpen);
 
     const [state, dispatch] = useReducer(CategoryMasterReducers, initialState);
-    console.log(state,'state')
     const [tableData, setTableData] = useState([]);
 
     const [page, setPage] = useState(0);
@@ -160,10 +166,12 @@ const CategoryMaster = () => {
 
     const ValidateFunction = () => {
         if (!state.CategoryCode) {
-            return showToast("Kindly enter the Category Code", "warn")
+            window.alert("Kindly enter the Category Code");
+            return;
         }
         else if (!state.CategoryName) {
-            return showToast("Kindly enter the Category Name", "warn")
+            window.alert("Kindly enter the Category Name");
+            return;
         }
         saveFunction();
     }
@@ -175,28 +183,28 @@ const CategoryMaster = () => {
     const saveFunction = useCallback(async () => {
         const url = '/api/createCategory';
         const params = {
-           ...state
+            ...state
         }
-            await CommonAPISave({ url, params }).then((res) => {
-                if (res.Output && res.Output.status.code == 200 && res.Output.data.length > 0 ) {
-                    // const data = res.Output.data
-                    showToast(res.Output.status.message, "success")
-                    dispatch({ type: "RESET" });
-                } else {
-                    showToast(res.Output.status.message, "warn")
-                }
-                
-                tableSelect()
-            })
-        
-    },[state])
+        await CommonAPISave({ url, params }).then((res) => {
+            if (res.Output && res.Output.status.code == 200 && res.Output.data.length > 0) {
+                // const data = res.Output.data
+                showToast(res.Output.status.message, "success")
+                dispatch({ type: "RESET" });
+            } else {
+                showToast(res.Output.status.message, "warn")
+            }
+
+            tableSelect()
+        })
+
+    }, [state])
 
     const tableSelect = useCallback(async () => {
         const url = '/api/GetCategories';
         const params = {
-                pageNumber: 1,
-                pageSize: 10
-            
+            pageNumber: 1,
+            pageSize: 10
+
         }
         await CommonAPISave({ url, params }).then((res) => {
             if (res.Output.status.code && res.Output.data.length > 0) {
@@ -220,7 +228,9 @@ const CategoryMaster = () => {
 
             {/* Main Content Area */}
             <section className="flex-1 h-full">
-                <div className="w-full h-10 bg-gray-200 flex items-center px-2 text-black">
+                <div className="w-full h-10 bg-gray-200 flex items-center px-2 text-black gap-2">
+                    {isOpen ? <RiMenuFoldLine onClick={toggleSidebar} className="w-5 h-5 cursor-pointer" /> :
+                        <RiMenuFold2Line onClick={toggleSidebar} className="w-5 h-5 cursor-pointer" />}
                     <span className="text-sm font-medium">Category Master</span>
                 </div>
                 <div className="w-full h-[110px] p-2 pt-4">
