@@ -7,10 +7,10 @@ export async function POST(request) {
         const requestBody = await request.json();
         const body = requestBody.data
         const query = `EXEC GetTaxes @pageNumber = ${body.pageNumber}, @pageSize = ${body.pageSize}`;
-        console.log(query, 'Query')
+      
         const pool = await getDBConnection();
         const qryExec = await pool.request().query(query);
-        console.log(qryExec, 'qryExec')
+        //console.log(qryExec, 'qryExec')
 
         if (qryExec.recordsets && qryExec.recordsets.length > 0) {
             const result = qryExec.recordsets[0]

@@ -163,11 +163,7 @@ const StateMaster = () => {
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
     const ValidateFunction = () => {
-        if (!state.StateCode) {
-            window.alert("Kindly enter the State Code");
-            return;
-        }
-        else if (!state.StateName) {
+        if (!state.StateName) {
             window.alert("Kindly enter the State Name");
             return;
         }
@@ -239,7 +235,7 @@ const StateMaster = () => {
                                 <input
                                     type="number"
                                     className="EntryInputField100 pr-8"
-                                    placeholder="Enter State Code"
+                                    placeholder="Auto Generate"
                                     value={state.StateCode}
                                     onChange={(e) => dispatch({ type: "StateCode", payload: e.target.value })}
                                 />

@@ -172,11 +172,7 @@ const ItemMaster = () => {
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
     const ValidateFunction = () => {
-        if (!state.ItemCode) {
-            window.alert("Kindly enter the Item Code");
-            return;
-        }
-        else if (!state.ItemName) {
+       if (!state.ItemName) {
             window.alert("Kindly enter the Item Name");
             return;
         }
@@ -274,7 +270,7 @@ const ItemMaster = () => {
                                 <input
                                     type="number"
                                     className="EntryInputField100 pr-8"
-                                    placeholder="Enter Item Code"
+                                    placeholder="Auto Generate"
                                     value={state.ItemCode}
                                     onChange={(e) => dispatch({ type: "ItemCode", payload: e.target.value })}
                                 />

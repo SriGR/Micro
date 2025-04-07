@@ -5,10 +5,10 @@ import { getDBConnection } from "../../../../lib/db";
 export async function POST() {
     try {
         const query = `SELECT * FROM ms_suppliermaster`;
-        console.log(query, 'Query')
+        //console.log(query, 'Query')
         const pool = await getDBConnection();
         const qryExec = await pool.request().query(query);
-        console.log(qryExec, 'qryExec')
+        //console.log(qryExec, 'qryExec')
 
         if (qryExec.recordsets && qryExec.recordsets.length > 0) {
             const result = qryExec.recordsets[0]

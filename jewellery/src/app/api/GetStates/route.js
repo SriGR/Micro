@@ -8,11 +8,11 @@ export async function POST(request) {
         const body = requestBody.data
 
         const query =`EXEC GetStates @pageNumber = ${body.pageNumber}, @pageSize = ${body.pageSize}`;
-        console.log(query, 'Query')
+       // console.log(query, 'Query')
         const pool = await getDBConnection();
 
         const qryExec = await pool.request().query(query);
-        console.log(qryExec, 'qryExec')
+       // console.log(qryExec, 'qryExec')
 
         if (qryExec.recordsets && qryExec.recordsets.length > 0) {
             const result = qryExec.recordsets[0]

@@ -165,11 +165,9 @@ const CategoryMaster = () => {
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
     const ValidateFunction = () => {
-        if (!state.CategoryCode) {
-            window.alert("Kindly enter the Category Code");
-            return;
-        }
-        else if (!state.CategoryName) {
+      
+        
+        if (!state.CategoryName) {
             window.alert("Kindly enter the Category Name");
             return;
         }
@@ -241,7 +239,7 @@ const CategoryMaster = () => {
                                 <input
                                     type="number"
                                     className="EntryInputField100 pr-8"
-                                    placeholder="Enter Category Code"
+                                    placeholder="Auto Generate"
                                     value={state.CategoryCode}
                                     onChange={(e) => dispatch({ type: "CategoryCode", payload: e.target.value })}
                                 />

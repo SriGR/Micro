@@ -10,31 +10,21 @@ export async function POST(request) {
         const pool = await getDBConnection();
         const requestDB = pool.request();
 
-        requestDB.input("taxcode", body.TaxCode);
+           // Auto-generate next 3-digit category code
+           const getMaxCodeQuery = `SELECT MAX(CAST(taxcode AS INT)) AS maxCode FROM ms_tax`;
+           const maxCodeResult = await requestDB.query(getMaxCodeQuery);
+   
+           const nextCode = (parseInt(maxCodeResult.recordset[0].maxCode || "0", 10) + 1)
+               .toString()
+               .padStart(3, "0"); // Format to 3-digit (e.g., "001", "045")
+        
+        requestDB.input("taxcode",nextCode);
         requestDB.input("taxname", body.TaxName);
         requestDB.input("taxpercentage", body.TaxPercentage);
         requestDB.input("status", "Active");
         requestDB.input("createdby", body.createdby || "Admin");
 
-        const checkQuery = `SELECT taxcode FROM ms_tax WHERE taxcode = @taxcode`;
-        const checkResult = await requestDB.query(checkQuery);
-
-        if (checkResult.recordset.length > 0) {
-            return NextResponse.json(
-                {
-                    Output: {
-                        status: {
-                            code: 400,
-                            message: "FAILED: Tax Code Already Exists",
-                        },
-                        data: checkResult.recordset[0],
-                    },
-                },
-                { status: 200 }
-            );
-        }
-
-        // Execute stored procedure
+         // Execute stored procedure
         const query = `INSERT INTO ms_tax (taxcode, taxname, taxpercentage, status, createdby)
                        OUTPUT INSERTED.taxcode  -- Return inserted taxcode
                        VALUES (@taxcode, @taxname, @taxpercentage, @status, @createdby);

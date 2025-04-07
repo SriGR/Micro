@@ -163,11 +163,7 @@ const TaxMaster = () => {
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
     const ValidateFunction = () => {
-        if (!state.TaxCode) {
-            window.alert("Kindly enter the Tax Code");
-            return;
-        }
-        else if (!state.TaxName) {
+        if (!state.TaxName) {
             window.alert("Kindly enter the Tax Name");
             return;
         }
@@ -246,7 +242,7 @@ const TaxMaster = () => {
                                 <input
                                     type="number"
                                     className="EntryInputField100 pr-8"
-                                    placeholder="Enter Tax Code"
+                                    placeholder="Auto Generate"
                                     value={state.TaxCode}
                                     onChange={(e) => dispatch({ type: "TaxCode", payload: e.target.value })}
                                 />
