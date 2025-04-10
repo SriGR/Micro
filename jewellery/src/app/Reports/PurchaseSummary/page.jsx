@@ -171,7 +171,7 @@ const CategoryMaster = () => {
 
 
 
-    const ValidateFunction = () => {
+    const tableSelect = async() => {
         if (!state.FromDate) {
             window.alert("Kindly select the From Date");
             return;
@@ -184,39 +184,16 @@ const CategoryMaster = () => {
             window.alert("Kindly select the Supplier Name");
             return;
         }
-        tableSelect();
-    }
-
-    const handleCancel = useCallback(() => {
-        // dispatch({ type: "RESET" });
-    }, [state]);
-
-    const dropDownSelect = async (endPoint, TablePagination, index) => {
-        const url = `/api/${endPoint}`;
-        const params = {
-            status: 'Active',
-            pageNumber: TablePagination.pageNumber,
-            pageSize: TablePagination.pageSize
-        }
-        await CommonAPISave({ url, params }).then((res) => {
-            if (res.Output.status.code && res.Output.data.length > 0) {
-                const data = res.Output.data
-                if (endPoint == 'getSupplier') {
-                    setCustomerSelect(data)
-                }
-            }
-        })
-    }
-
-    const tableSelect = useCallback(async () => {
         const url = '/api/getPurchase';
         const params = {
-            fromDate: state.FromDate, toDate: state.ToDate, suppliercode: state.SupplierCode,
+            fromDate: state.FromDate, 
+            toDate: state.ToDate,
+            suppliercode: state.SupplierCode,
             status: 'Active',
             pageNumber: 1,
             pageSize: 10
-
         }
+        console.log("params", params)
         await CommonAPISave({ url, params }).then((res) => {
             if (res.Output.status.code && res.Output.data.length > 0) {
                 const data = res.Output.data
@@ -239,7 +216,37 @@ const CategoryMaster = () => {
                 }
             }
         })
-    }, [])
+    }
+
+ 
+
+    const handleCancel = useCallback(() => {
+         setTableData([]);
+         setTotalAmountSum(0);
+         setDiscountAmountSum(0);
+         setRoundOffSum(0);
+         setNetAmountSum(0);
+         dispatch({ type: "RESET" });
+    }, [state]);
+
+    const dropDownSelect = async (endPoint, TablePagination, index) => {
+        const url = `/api/${endPoint}`;
+        const params = {
+            status: 'Active',
+            pageNumber: TablePagination.pageNumber,
+            pageSize: TablePagination.pageSize
+        }
+        await CommonAPISave({ url, params }).then((res) => {
+            if (res.Output.status.code && res.Output.data.length > 0) {
+                const data = res.Output.data
+                if (endPoint == 'getSupplier') {
+                    setCustomerSelect(data)
+                }
+            }
+        })
+    }
+
+   
 
     return (
         <div className="flex h-screen">
@@ -331,15 +338,15 @@ const CategoryMaster = () => {
                         </div>
                     </div>
                     <div className="w-full flex justify-end items-center gap-[10px] pt-2">
-                        {/* <button
-                            onClick={() => { handleCancel }} title="Reset"
+                        <button
+                            onClick={() => { handleCancel() }} title="Reset"
                             className="w-[auto] px-2 h-[30px] text-sm rounded outline-none bg-[#f7f7f7] font-light text-[#4b4b4b] hover:bg-[#eaeaea]"
                         >
                             <RiResetRightFill className="w-4 h-4" />
-                        </button> */}
+                        </button>
 
                         <button
-                            onClick={ValidateFunction}
+                            onClick={tableSelect}
                             className="w-[90px] h-[30px] text-sm rounded outline-none bg-sky-600 font-light text-white hover:bg-sky-800"
                         >
                             View
