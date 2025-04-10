@@ -272,6 +272,7 @@ const ItemMaster = () => {
                                     className="EntryInputField100 pr-8"
                                     placeholder="Auto Generate"
                                     value={state.ItemCode}
+                                    disabled
                                     onChange={(e) => dispatch({ type: "ItemCode", payload: e.target.value })}
                                 />
                                 {state.ItemCode && (

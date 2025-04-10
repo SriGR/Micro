@@ -16,7 +16,7 @@ export async function POST(request) {
         const balance = openingCredit - openingDebit;
 
         // Bind parameters to avoid SQL injection
-        requestDB.input("customername", body.CustomerName || "");
+        requestDB.input("customername", body.SupplierName || "");
         requestDB.input("address1", body.Address1 || "");
         requestDB.input("address2", body.Address2 || "");
         requestDB.input("address3", body.Address3 || "");

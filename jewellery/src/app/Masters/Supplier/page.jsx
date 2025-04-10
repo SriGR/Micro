@@ -503,7 +503,7 @@ const SupplierMaster = () => {
                                 {(tableData && tableData.length > 0) && tableData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
                                     <TableRow>
                                         <TableCell>{row.suppliercode}</TableCell>
-                                        <TableCell>{row.SupplierName}</TableCell>
+                                        <TableCell>{row.customername}</TableCell>
                                         <TableCell>{row.address1}</TableCell>
                                         <TableCell>{row.address2}</TableCell>
                                         <TableCell>{row.address3}</TableCell>

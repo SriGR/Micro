@@ -1,7 +1,7 @@
 "use client";
 import { useState, useReducer, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { X, LogOut, ChevronDown } from "lucide-react";
+import { X, LogOut, ChevronDown, Search } from "lucide-react";
 import Link from "next/link";
 import { MdClear } from "react-icons/md";
 import { IoFolderOutline } from "react-icons/io5";
@@ -15,7 +15,7 @@ import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 import showToast from '../../../utils/toastService';
-import { ToastContainer } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import { SlHome } from "react-icons/sl";
 import CommonAPISave from "../../Components/CommonAPISave";
 import { RiMenuFold2Line } from "react-icons/ri";
@@ -164,9 +164,11 @@ const CategoryMaster = () => {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
+    const [searchText, setSearchText] = useState('')
+
     const ValidateFunction = () => {
-      
-        
+
+
         if (!state.CategoryName) {
             window.alert("Kindly enter the Category Name");
             return;
@@ -218,6 +220,39 @@ const CategoryMaster = () => {
     }, [])
 
 
+    useEffect(() => {
+        if (!searchText) return;
+    
+        const timeout = setTimeout(() => {
+            SearchFunction();
+        }, 500);
+    
+        return () => clearTimeout(timeout);
+    }, [searchText]);
+    
+
+
+    async function SearchFunction() {
+        const url = '/api/searchCategory';
+        const params = {
+            searchText: searchText,
+            pageNumber: 1,
+            pageSize: 10
+        }
+        await CommonAPISave({ url, params }).then((res) => {
+            if (res.Output.status.code == 200 && res.Output.data.length > 0) {
+                const data = res.Output.data
+                setTableData(data)
+            } else {
+                showToast(res.Output.status.message, "warn")
+            }
+        })
+    }
+    const clearSearchText = useCallback(async () => {
+        setSearchText("");
+        await tableSelect();
+    }, [])
+    
     return (
         <div className="flex h-screen">
             <ToastContainer />
@@ -241,7 +276,8 @@ const CategoryMaster = () => {
                                     className="EntryInputField100 pr-8"
                                     placeholder="Auto Generate"
                                     value={state.CategoryCode}
-                                    onChange={(e) => dispatch({ type: "CategoryCode", payload: e.target.value })}
+                                    disabled
+                                // onChange={(e) => dispatch({ type: "CategoryCode", payload: e.target.value })}
                                 />
                                 {state.CategoryCode && (
                                     <span
@@ -275,20 +311,44 @@ const CategoryMaster = () => {
                             </div>
                         </div>
                     </div>
-                    <div className="w-full flex justify-end items-center gap-[10px]">
-                        <button
-                            onClick={ValidateFunction}
-                            className="w-[90px] h-[30px] text-sm rounded outline-none bg-green-700 font-light text-white hover:bg-green-800"
-                        >
-                            Save
-                        </button>
+                    <div className="w-full flex justify-between items-center gap-[10px] mt-2">
+                        <div className="w-[250px] flex justify-end items-center gap-[10px]">
+                            {/* Search here */}
 
-                        <button
-                            onClick={handleCancel}
-                            className="w-[90px] h-[30px] text-sm rounded outline-none bg-red-600 font-light text-white hover:bg-red-500"
-                        >
-                            Cancel
-                        </button>
+                            <div className="relative w-full">
+                                <input
+                                    type="text"
+                                    className="EntryInputField100"
+                                    placeholder="Search here"
+                                    value={searchText}
+                                    onChange={(e) => setSearchText(e.target.value)}
+                                />
+                                {searchText && (
+                                    <span
+                                        onClick={clearSearchText}
+                                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-red-500 cursor-pointer"
+                                    >
+                                        <MdClear size={20} />
+                                    </span>
+                                )}
+                            </div>
+
+                        </div>
+                        <div className="w-auto flex justify-end items-center gap-[10px]">
+                            <button
+                                onClick={ValidateFunction}
+                                className="w-[90px] h-[30px] text-sm rounded outline-none bg-green-700 font-light text-white hover:bg-green-800"
+                            >
+                                Save
+                            </button>
+
+                            <button
+                                onClick={handleCancel}
+                                className="w-[90px] h-[30px] text-sm rounded outline-none bg-red-600 font-light text-white hover:bg-red-500"
+                            >
+                                Cancel
+                            </button>
+                        </div>
                     </div>
                 </div>
                 {/* Table Section */}

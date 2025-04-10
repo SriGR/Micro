@@ -237,6 +237,7 @@ const StateMaster = () => {
                                     className="EntryInputField100 pr-8"
                                     placeholder="Auto Generate"
                                     value={state.StateCode}
+                                    disabled
                                     onChange={(e) => dispatch({ type: "StateCode", payload: e.target.value })}
                                 />
                                 {state.StateCode && (

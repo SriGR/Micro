@@ -1,5 +1,5 @@
 "use client";
-import { useState, useReducer, useEffect } from "react";
+import { useState, useReducer, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { X, LogOut, ChevronDown } from "lucide-react";
 import Link from "next/link";
@@ -14,12 +14,13 @@ import TableHead from "@mui/material/TableHead";
 import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
-// import showToast from '../../../utils/toastService';
+import showToast from '../../../utils/toastService';
 import { ToastContainer } from "react-toastify";
 import { SlHome } from "react-icons/sl";
 import CommonAPISave from "app/Components/CommonAPISave";
 import { RiMenuFold2Line } from "react-icons/ri";
 import { RiMenuFoldLine } from "react-icons/ri";
+import { type } from "os";
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
     const [openSection, setOpenSection] = useState(null);
@@ -179,6 +180,7 @@ const ItemMaster = () => {
     const [state, dispatch] = useReducer(ItemMasterReducers, initialState);
 
     const [tableData, setTableData] = useState([]);
+    console.log(tableData, 'tableData')
 
     const [ItemSelect, setItemSelect] = useState([])
     const [CustomerSelect, setCustomerSelect] = useState([]);
@@ -233,7 +235,8 @@ const ItemMaster = () => {
 
     const handleFileGenerate = async (type) => {
         const url = '/api/fileGenerate';
-        const params = { state, tableData, type };
+        const stateValues = { CustomerCode: state.CustomerCode, CustomerName: state.CustomerName, Address1: state.Address1, Address2: state.Address2, PhoneNo: state.PhoneNo, PurchaseNo: state.PurchaseNo, PurchaseDate: state.PurchaseDate, PurchaseRefNo: state.PurchaseRefNo, GrandTotal: state.GrandTotal, Remarks: state.Remarks }
+        const params = { state: stateValues, tableData, type };
 
         try {
             const res = await CommonAPISave({ url, params });
@@ -270,6 +273,27 @@ const ItemMaster = () => {
     };
 
 
+    const ValidateFunction = () => {
+        saveFunction();
+    }
+
+
+    const saveFunction = useCallback(async () => {
+        const url = '/api/InsertPurchase';
+        const stateValues = { CustomerCode: state.CustomerCode, CustomerName: state.CustomerName, Address1: state.Address1, Address2: state.Address2, PhoneNo: state.PhoneNo, PurchaseNo: state.PurchaseNo, PurchaseDate: state.PurchaseDate, PurchaseRefNo: state.PurchaseRefNo, GrandTotal: state.GrandTotal, Remarks: state.Remarks }
+        const params = { state: stateValues, tableData };
+        await CommonAPISave({ url, params }).then((res) => {
+            if (res.Output && res.Output.status.code == 200 && res.Output.data.length > 0) {
+                // const data = res.Output.data
+                showToast(res.Output.status.message, "success");
+                dispatch({ type: "RESET" });
+            } else {
+                showToast(res.Output.status.message, "warn")
+            }
+        })
+
+    }, [state])
+
     return (
         <div className="flex h-screen">
             <ToastContainer />
@@ -296,6 +320,7 @@ const ItemMaster = () => {
                                     onChange={(e) => {
                                         const selectedCustomer = CustomerSelect.find(item => item.customername === e.target.value);
                                         dispatch({ type: "CustomerName", payload: e.target.value });
+                                        dispatch({ type: "CustomerCode", payload: selectedCustomer ? selectedCustomer.suppliercode : "" });
                                         dispatch({ type: "Address1", payload: selectedCustomer ? selectedCustomer.address1 : "" });
                                         dispatch({ type: "Address2", payload: selectedCustomer ? selectedCustomer.address2 : "" });
                                         dispatch({ type: "Address3", payload: selectedCustomer ? selectedCustomer.address3 : "" });
@@ -315,6 +340,7 @@ const ItemMaster = () => {
                                     <span
                                         onClick={() => {
                                             dispatch({ type: "CustomerName", payload: "" });
+                                            dispatch({ type: "CustomerCode", payload: "" });
                                             dispatch({ type: "Address1", payload: "" });
                                             dispatch({ type: "Address2", payload: "" });
                                             dispatch({ type: "Address3", payload: "" });
@@ -465,7 +491,7 @@ const ItemMaster = () => {
                                                         ...updatedData[index],
                                                         ItemName: e.target.value,
                                                         ItemCode: selectedItem ? selectedItem.itemcode : "",
-                                                        uomname: selectedItem ? selectedItem.uomname : ""
+                                                        UOM: selectedItem ? selectedItem.uomname : ""
                                                     };
                                                     setTableData(updatedData);
                                                 }}
@@ -506,7 +532,7 @@ const ItemMaster = () => {
                                             <input
                                                 type="text"
                                                 className="TableInput"
-                                                value={row.uomname}
+                                                value={row.UOM}
                                             // onChange={(e) => {
                                             //     const updatedData = [...tableData];
                                             //     updatedData[index].UOM = e.target.value;
@@ -609,6 +635,12 @@ const ItemMaster = () => {
                     <div className="w-auto flex justify-center items-end h-full gap-4">
                         {/* print and Download */}
                         <div className="w-full flex justify-end items-center gap-[10px]">
+                            <button
+                                onClick={ValidateFunction}
+                                className="w-[90px] h-[30px] text-sm rounded outline-none bg-green-700 font-light text-white hover:bg-green-800"
+                            >
+                                Save
+                            </button>
                             <button
                                 onClick={() => { handleFileGenerate('print') }}
                                 className="w-[90px] h-[30px] text-sm rounded outline-none bg-sky-600 font-light text-white hover:bg-sky-800"

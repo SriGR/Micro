@@ -243,6 +243,7 @@ const TaxMaster = () => {
                                     type="number"
                                     className="EntryInputField100 pr-8"
                                     placeholder="Auto Generate"
+                                    disabled
                                     value={state.TaxCode}
                                     onChange={(e) => dispatch({ type: "TaxCode", payload: e.target.value })}
                                 />

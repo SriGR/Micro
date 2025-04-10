@@ -25,6 +25,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
     const [openSection, setOpenSection] = useState(null);
 
+
     const toggleSection = (section) => {
         setOpenSection(openSection === section ? null : section);
     };
@@ -161,12 +162,14 @@ const CategoryMaster = () => {
     const [tableData, setTableData] = useState([]);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [CustomerSelect, setCustomerSelect] = useState([]);
 
-    let Suppliers = [
-        { SupplierCode: "001", SupplierName: "Supplier 1" },
-        { SupplierCode: "002", SupplierName: "Supplier 2" },
-        { SupplierCode: "003", SupplierName: "Supplier 3" }
-    ]
+    const [totalAmountSum, setTotalAmountSum] = useState(0);
+    const [discountAmountSum, setDiscountAmountSum] = useState(0);
+    const [roundOffSum, setRoundOffSum] = useState(0);
+    const [netAmountSum, setNetAmountSum] = useState(0);
+
+
 
     const ValidateFunction = () => {
         if (!state.FromDate) {
@@ -181,16 +184,62 @@ const CategoryMaster = () => {
             window.alert("Kindly select the Supplier Name");
             return;
         }
-        saveFunction();
+        tableSelect();
     }
 
-    const handleCancel = () => {
-        dispatch({ type: "RESET" });
-    };
+    const handleCancel = useCallback(() => {
+        // dispatch({ type: "RESET" });
+    }, [state]);
 
-    const saveFunction = useCallback(async () => {
-    }, [state])
+    const dropDownSelect = async (endPoint, TablePagination, index) => {
+        const url = `/api/${endPoint}`;
+        const params = {
+            status: 'Active',
+            pageNumber: TablePagination.pageNumber,
+            pageSize: TablePagination.pageSize
+        }
+        await CommonAPISave({ url, params }).then((res) => {
+            if (res.Output.status.code && res.Output.data.length > 0) {
+                const data = res.Output.data
+                if (endPoint == 'getSupplier') {
+                    setCustomerSelect(data)
+                }
+            }
+        })
+    }
 
+    const tableSelect = useCallback(async () => {
+        const url = '/api/getPurchase';
+        const params = {
+            fromDate: state.FromDate, toDate: state.ToDate, suppliercode: state.SupplierCode,
+            status: 'Active',
+            pageNumber: 1,
+            pageSize: 10
+
+        }
+        await CommonAPISave({ url, params }).then((res) => {
+            if (res.Output.status.code && res.Output.data.length > 0) {
+                const data = res.Output.data
+                setTableData(data)
+                if (data.length > 0) {
+                    const total = data.reduce((sum, row) => sum + (row.totalamount || 0), 0);
+                    const discount = data.reduce((sum, row) => sum + (row.discountamount || 0), 0);
+                    const roundoff = data.reduce((sum, row) => sum + (row.roundoff || 0), 0);
+                    const net = data.reduce((sum, row) => {
+                        const total = row.totalamount || 0;
+                        const discount = row.discountamount || 0;
+                        const round = row.roundoff || 0;
+                        return sum + (total - discount + round);
+                    }, 0);
+
+                    setTotalAmountSum(total);
+                    setDiscountAmountSum(discount);
+                    setRoundOffSum(roundoff);
+                    setNetAmountSum(net);
+                }
+            }
+        })
+    }, [])
 
     return (
         <div className="flex h-screen">
@@ -215,7 +264,7 @@ const CategoryMaster = () => {
                                 />
                                 {state.FromDate && (
                                     <span
-                                        onClick={() => dispatch({ type: "FromDate", payload: null })}
+                                        // onClick={() => dispatch({ type: "FromDate", payload: null })}
                                         className="absolute right-2 top-1/2 transform -translate-y-1/2 text-red-500 cursor-pointer"
                                     >
                                         <MdClear />
@@ -251,16 +300,18 @@ const CategoryMaster = () => {
                                 <select
                                     className="InputStyle w-full pr-8 appearance-none"
                                     value={state.SupplierName}
+                                    onClick={() => { dropDownSelect('getSupplier', { pageNumber: 1, pageSize: 10 }) }}
                                     onChange={(e) => {
-                                        const selectedCategory = Suppliers.find(item => item.SupplierName === e.target.value);
+                                        const selectedCustomer = CustomerSelect.find(item => item.customername === e.target.value);
                                         dispatch({ type: "SupplierName", payload: e.target.value });
-                                        dispatch({ type: "SupplierCode", payload: selectedCategory ? selectedCategory.SupplierCode : "" });
+                                        dispatch({ type: "SupplierCode", payload: selectedCustomer ? selectedCustomer.suppliercode : "" });
+
                                     }}
                                 >
                                     <option value="">Select Supplier</option>
-                                    {Suppliers.map((item) => (
-                                        <option key={item.SupplierCode} value={item.SupplierName}>
-                                            {item.SupplierName}
+                                    {CustomerSelect.map((item) => (
+                                        <option key={item.SupplierCode} value={item.customername}>
+                                            {item.customername}
                                         </option>
                                     ))}
                                 </select>
@@ -280,12 +331,12 @@ const CategoryMaster = () => {
                         </div>
                     </div>
                     <div className="w-full flex justify-end items-center gap-[10px] pt-2">
-                        <button
-                            onClick={handleCancel} title="Reset"
+                        {/* <button
+                            onClick={() => { handleCancel }} title="Reset"
                             className="w-[auto] px-2 h-[30px] text-sm rounded outline-none bg-[#f7f7f7] font-light text-[#4b4b4b] hover:bg-[#eaeaea]"
                         >
                             <RiResetRightFill className="w-4 h-4" />
-                        </button>
+                        </button> */}
 
                         <button
                             onClick={ValidateFunction}
@@ -320,60 +371,54 @@ const CategoryMaster = () => {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {(tableData && tableData.length > 0) && tableData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
-                                    <TableRow>
-                                        <TableCell>{row.FromDate}</TableCell>
-                                        <TableCell>{row.ToDate}</TableCell>
-                                        <TableCell>{row.Null}</TableCell>
-                                        <TableCell>{row.Null}</TableCell>
-                                        <TableCell>{row.Null}</TableCell>
-                                        <TableCell>{row.Null}</TableCell>
-                                        <TableCell>{row.Null}</TableCell>
-                                        <TableCell>{row.Null}</TableCell>
-                                        <TableCell>{row.Null}</TableCell>
-                                        <TableCell>{row.Null}</TableCell>
-                                    </TableRow>
-                                ))}
+                                {(tableData && tableData.length > 0) && tableData
+                                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                    .map((row, index) => (
+                                        <TableRow key={index}>
+                                            <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                                            <TableCell>{row.purchasenumber}</TableCell>
+                                            <TableCell>{new Date(row.purchasedate).toLocaleDateString()}</TableCell>
+                                            <TableCell>{row.purchasereferencenumber}</TableCell>
+                                            <TableCell>{row.customername}</TableCell>
+                                            <TableCell>{row.totalamount}</TableCell>
+                                            <TableCell>{row.discountamount || 0}</TableCell>
+                                            <TableCell>{row.roundoff || 0}</TableCell>
+                                            <TableCell>{(row.totalamount - (row.discountamount || 0) + (row.roundoff || 0)).toFixed(2)}</TableCell>
+                                            <TableCell>{row.remark || '-'}</TableCell>
+                                        </TableRow>
+                                    ))}
 
                                 <TableRow>
                                     <TableCell colSpan={5} className="TableInputTDtotal">
                                         Total
                                     </TableCell>
                                     <TableCell className="TableInputTDtotal">
-                                        <input
-                                            type="text"
-                                            className="TableInputBorder" />
+                                        {totalAmountSum.toFixed(2)}
                                     </TableCell>
                                     <TableCell className="TableInputTDtotal">
-                                        <input
-                                            type="text"
-                                            className="TableInputBorder" />
+                                        {discountAmountSum.toFixed(2)}
                                     </TableCell>
                                     <TableCell className="TableInputTDtotal">
-                                        <input
-                                            type="text"
-                                            className="TableInputBorder" />
+                                        {roundOffSum.toFixed(2)}
                                     </TableCell>
                                     <TableCell className="TableInputTDtotal">
-                                        <input
-                                            type="text"
-                                            className="TableInputBorder" />
+                                        {netAmountSum.toFixed(2)}
                                     </TableCell>
-                                    <TableCell className="TableInputTDtotal">
-                                    </TableCell>
+                                    <TableCell className="TableInputTDtotal"></TableCell>
                                 </TableRow>
+
                             </TableBody>
                         </Table>
+
                     </TableContainer>
                     <TablePagination
-                        rowsPerPageOptions={[10, 50, 100]}
                         component="div"
                         count={tableData.length}
-                        rowsPerPage={rowsPerPage}
                         page={page}
-                        onPageChange={(event, newPage) => setPage(newPage)}
-                        onRowsPerPageChange={(event) => {
-                            setRowsPerPage(parseInt(event.target.value, 10));
+                        onPageChange={(e, newPage) => setPage(newPage)}
+                        rowsPerPage={rowsPerPage}
+                        onRowsPerPageChange={(e) => {
+                            setRowsPerPage(parseInt(e.target.value, 10));
                             setPage(0);
                         }}
                     />
