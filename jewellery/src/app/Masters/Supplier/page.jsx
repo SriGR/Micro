@@ -173,11 +173,7 @@ const SupplierMaster = () => {
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
     const ValidateFunction = () => {
-        if (!state.SupplierName) {
-            window.alert("Kindly enter the Supplier Code");
-            return;
-        }
-        else if (!state.StateCode) {
+       if (!state.StateCode) {
             window.alert("Kindly select the State");
             return;
         }
