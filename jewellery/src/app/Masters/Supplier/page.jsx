@@ -177,6 +177,10 @@ const SupplierMaster = () => {
             window.alert("Kindly select the State");
             return;
         }
+        if (!state.SupplierName) {
+            window.alert("Kindly enter the SupplierName");
+            return;
+        }
         saveFunction();
     }
 
@@ -265,6 +269,7 @@ const SupplierMaster = () => {
                                     className="EntryInputField100 pr-8"
                                     placeholder="Enter Supplier Name"
                                     value={state.SupplierName}
+                                    required
                                     onChange={(e) => dispatch({ type: "SupplierName", payload: e.target.value })}
                                 />
                                 {state.SupplierName && (
