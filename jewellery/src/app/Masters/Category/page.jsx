@@ -79,7 +79,7 @@ export default function CategoryMaster() {
                         {!showEntry && !isView && (
                             <div className="py-2 flex justify-end px-3">
                                 <button
-                                    className="bg-blue-200  px-4 py-2 rounded hover:bg-blue-500 text-sm font-semibold"
+                                    className="bg-blue-400  px-4 py-2 rounded hover:bg-blue-500 text-sm font-semibold"
                                     onClick={() => {
                                         setShowEntry(true);
                                         setIsEdit(false);
