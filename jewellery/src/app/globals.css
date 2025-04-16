@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+
+
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -14,10 +17,11 @@
   }
 }
 
+
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Roboto", "Helvetica", "Arial", sans-serif;
   width: 100%;
   height: 100%;
   overflow: hidden !important;
@@ -230,7 +234,7 @@ body {
 
 
 .height145 {
-  height: calc(100% - 150px);
+  height: calc(100% - 50px);
 }
 
 .height220 {
