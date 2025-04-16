@@ -84,7 +84,7 @@ const TableComponent = forwardRef((props, ref) => {
     <div className="p-2">
       <div className="flex justify-between w-full gap-4 mb-2 px-3">
         <h2 className="text-sm font-semibold text-gray-700  ">Category List  ({totalCount})
-          <IconButton onClick={() => dispatch({ type: "REFRESH" })} color="primary" title="Refresh" aria-label="Refresh" >
+          <IconButton  color="primary" title="Refresh" aria-label="Refresh" >
             <RefreshIcon fontSize="small" onClick={fetchCategories}/>
           </IconButton>
         </h2>
