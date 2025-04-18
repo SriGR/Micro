@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback, useImperativeHandle ,forwardRef} from "react";
-import { useCategory } from "../../contexts/CategoryContext";
+import { useItem } from "../../contexts/ItemContext";
 import IconButton from "@mui/material/IconButton";
 import RefreshIcon from '@mui/icons-material/Refresh';
 import CustomTable from "../../Components/helperComponents/CustomTable";
@@ -15,7 +15,7 @@ const TableComponent = forwardRef((props, ref) => {
   const [searchText, setSearchText] = useState('');
 
 
-  const { setselectedRow, setShowEntry, setIsEdit, setIsView, dispatch ,columns} = useCategory();
+  const { setselectedRow, setShowEntry, setIsEdit, setIsView, dispatch, columns } = useItem();
 
   useImperativeHandle(ref, () => ({
     Refresh: () => {
@@ -25,7 +25,7 @@ const TableComponent = forwardRef((props, ref) => {
   const fetchCategories = useCallback(async () => {
     try {
       const res = await CommonAPISave({
-        url: "/api/GetCategories",
+        url: "/api/GetItems",
         params: {
           pageNumber: page,
           pageSize: rowsPerPage,
@@ -55,29 +55,50 @@ const TableComponent = forwardRef((props, ref) => {
     return () => clearTimeout(timeout);
   }, [searchText, fetchCategories]);
 
+
+
   const handleEdit = (row) => {
     setIsEdit(true);
     setIsView(false);
     setselectedRow(row);
+    dispatch({ type: "itemcode", payload: row.itemcode });
+    dispatch({ type: "itemname", payload: row.itemname });
+    dispatch({ type: "hsncode", payload: row.hsncode });
+    dispatch({ type: "taxcode", payload: row.taxcode });
+    dispatch({ type: "taxname", payload: row.taxname });
+    dispatch({ type: "uomname", payload: row.uomname });
+    dispatch({ type: "status", payload: row.status });
     dispatch({ type: "categorycode", payload: row.categorycode });
     dispatch({ type: "categoryname", payload: row.categoryname });
     setShowEntry(true);
   };
 
+
+
   const handleView = (row) => {
     setIsEdit(false);
     setIsView(true);
     setselectedRow(row);
+    dispatch({ type: "itemcode", payload: row.itemcode });
+    dispatch({ type: "itemname", payload: row.itemname });
+    dispatch({ type: "hsncode", payload: row.hsncode });
+    dispatch({ type: "taxcode", payload: row.taxcode });
+    dispatch({ type: "taxname", payload: row.taxname });
+    dispatch({ type: "uomname", payload: row.uomname });
+    dispatch({ type: "status", payload: row.status });
     dispatch({ type: "categorycode", payload: row.categorycode });
     dispatch({ type: "categoryname", payload: row.categoryname });
     setShowEntry(false);
     console.log("View", row);
   };
 
+ 
+  
+
   return (
     <div className="p-2">
       <div className="flex justify-between w-full gap-4 mb-2 px-3">
-        <h2 className="text-sm font-semibold text-gray-700  ">Category List  ({totalCount})
+        <h2 className="text-sm font-semibold text-gray-700  ">Item List  ({totalCount})
           <IconButton  color="primary" title="Refresh" aria-label="Refresh" >
             <RefreshIcon fontSize="small" onClick={fetchCategories}/>
           </IconButton>

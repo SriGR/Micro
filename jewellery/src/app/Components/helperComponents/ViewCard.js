@@ -19,6 +19,7 @@ const ViewCard = ({
   onEdit,
   onCancel,
   onCreateNew,
+  columns
 }) => {
   console.log("ViewCard selectedRow", selectedRow);
 
@@ -45,15 +46,15 @@ const ViewCard = ({
             </Typography>
           ) : (
             <Grid container spacing={2}>
-              {Object.entries(selectedRow).map(([key, value]) => (
-                <Grid item xs={12} sm={4} key={key}>
+              {columns.map((grid) => (
+                <Grid item xs={12} sm={4} key={grid.key}>
                   <Typography
                     variant="body2"
                     sx={{ fontSize: "0.85rem", fontWeight: 500, color: "#374151" }}
                   >
-                    <span className="font-semibold">{key.replace(/([A-Z])/g, " $1")} :</span>
+                    <span className="font-semibold">{grid.label} :</span>
                     <span className="font-normal text-gray-700 ml-1">
-                      {value || "-"}
+                      {selectedRow[grid.key] || "-"}
                     </span>
                   </Typography>
                 </Grid>

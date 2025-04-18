@@ -19,7 +19,7 @@ const EntryComponent = () => {
   console.log("EntryComponent state", state);
 
   const handleSave = () => {
-    if (!state.CategoryName) {
+    if (!state.categoryname) {
       window.alert("Enter Category Name");
       return;
     }
@@ -84,7 +84,7 @@ const EntryComponent = () => {
                   Category Code:
                 </label>
                 <input
-                  value={state.CategoryCode}
+                  value={state.categorycode}
                   disabled
                   placeholder="Auto-generated"
                   className="EntryInputField100 w-full bg-gray-100 text-gray-500 pr-8"
@@ -99,19 +99,19 @@ const EntryComponent = () => {
                   Category Name:
                 </label>
                 <input
-                  value={state.CategoryName}
+                  value={state.categoryname}
                   onChange={(e) =>
-                    dispatch({ type: "CategoryName", payload: e.target.value })
+                    dispatch({ type: "categoryname", payload: e.target.value })
                   }
                   placeholder="Enter Category Name"
                   className="EntryInputField100 w-full pr-8"
                 />
-                {state.CategoryName && (
+                {state.categoryname && (
                   <button
                     type="button"
                     onClick={() => {
-                      dispatch({ type: "CategoryName", payload: "" })
-                      dispatch({ type: "CategoryCode", payload: "" })
+                      dispatch({ type: "categoryname", payload: "" })
+                      dispatch({ type: "categorycode", payload: "" })
                     }
                     }
                     className="absolute right-2 top-[31px] text-gray-500 hover:text-black flex "

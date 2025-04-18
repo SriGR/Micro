@@ -24,7 +24,7 @@ export async function POST(request) {
 
     // Bind parameters
     requestDB.input("categorycode", categoryCodeToUse);
-    requestDB.input("categoryname", body.CategoryName);
+    requestDB.input("categoryname", body.categoryname);
     requestDB.input("remarks", body.remarks || null);
     requestDB.input("createdby", body.createdby);
     requestDB.input("status", body.status || "Active");

@@ -1,49 +1,60 @@
 "use server";
 import { NextResponse } from "next/server";
 import { getDBConnection } from "../../../../lib/db";
+import sql from "mssql";
 
 export async function POST(request) {
     try {
         const requestBody = await request.json();
-        const body = requestBody.data
-    
-        const query = `EXEC GetItems @pageNumber = ${body.pageNumber}, @pageSize = ${body.pageSize}`;
-        //console.log(query, 'Query')
+        const body = requestBody.data;
+
+        const searchText = body.search || "";
+
         const pool = await getDBConnection();
-        const qryExec = await pool.request().query(query);
-        //console.log(qryExec, 'qryExec')
 
-        if (qryExec.recordsets && qryExec.recordsets.length > 0) {
-            const result = qryExec.recordsets[0]
-            return NextResponse.json(
-                {
-                    Output: {
-                        status: {
-                            code: 200,
-                            message: "Saved Successfully",
-                        },
-                        data: result,
-                    },
-                },
-                { status: 200 }
-            );
-        } else {
-            return NextResponse.json(
-                {
-                    Output: {
-                        status: {
-                            code: 400,
-                            message: "No records found",
-                        },
-                        data: [],
-                    },
-                },
-                { status: 200 }
-            );
-        }
+        // Prepare request object for item data
+        const dataRequest = pool.request();
+        dataRequest.input("search", sql.VarChar, searchText);
+        dataRequest.input("pageNumber", sql.Int, body.pageNumber);
+        dataRequest.input("pageSize", sql.Int, body.pageSize);
 
+        const dataQuery = await dataRequest.query(`
+            EXEC GetItems 
+                @search = @search,
+                @pageNumber = @pageNumber, 
+                @pageSize = @pageSize
+        `);
+
+        // Prepare request object for total count
+        const countRequest = pool.request();
+        countRequest.input("search", sql.VarChar, searchText);
+
+        const countQuery = `
+            SELECT COUNT(*) AS totalCount 
+            FROM ms_item 
+            WHERE 
+                (@search = '' 
+                OR itemname LIKE '%' + @search + '%' 
+                OR itemcode LIKE '%' + @search + '%')
+        `;
+
+        const totalCountResult = await countRequest.query(countQuery);
+
+        return NextResponse.json(
+            {
+                Output: {
+                    status: {
+                        code: 200,
+                        message: "Data fetched successfully",
+                    },
+                    data: dataQuery.recordset,
+                    totalCount: totalCountResult.recordset[0]?.totalCount || 0,
+                },
+            },
+            { status: 200 }
+        );
     } catch (err) {
-        console.error("Error in login API:", err.message);
+        console.error("Error in GetItems API:", err.message);
         return NextResponse.json(
             {
                 Output: {
@@ -54,6 +65,3 @@ export async function POST(request) {
         );
     }
 }
-
-
-

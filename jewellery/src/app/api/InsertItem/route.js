@@ -20,11 +20,11 @@ export async function POST(request) {
 
 
         requestDB.input("itemcode", nextCode);
-        requestDB.input("itemname", body.ItemName);
-        requestDB.input("hsncode", body.HSNcode);
-        requestDB.input("uomname", body.UOMname);
-        requestDB.input("categorycode", body.CategoryCode);
-        requestDB.input("taxcode", body.TaxCode);
+        requestDB.input("itemname", body.itemname);
+        requestDB.input("hsncode", body.hsncode);
+        requestDB.input("uomname", body.uomname);
+        requestDB.input("categorycode", body.categorycode);
+        requestDB.input("taxcode", body.taxcode);
         requestDB.input("status", body.status);
         requestDB.input("createdby", body.createdby);
         requestDB.input("extra", "");

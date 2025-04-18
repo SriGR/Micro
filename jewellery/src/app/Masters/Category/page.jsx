@@ -11,10 +11,12 @@ import ViewCard from "../../Components/helperComponents/ViewCard";
 import { CategoryContext } from "../../contexts/CategoryContext"; 
 
 const initialState = {
-    CategoryCode: "",
-    CategoryName: "",
+    categorycode: "",
+    categoryname: "",
     status: "Active",
 };
+
+
 
 const reducer = (state, action) => {
     switch (action.type) {
@@ -32,6 +34,11 @@ export default function CategoryMaster() {
     const [selectedRow, setselectedRow] = useState(null);
     const [isEdit, setIsEdit] = useState(false);
     const [isView, setIsView] = useState(false);
+
+    const columns = [
+        { key: "categorycode", label: "Category Code" },
+        { key: "categoryname", label: "Category Name" },
+      ];
 
     const tableRef = useRef(null);
 
@@ -59,7 +66,7 @@ export default function CategoryMaster() {
                 state, dispatch, saveCategory,
                 setShowEntry, setselectedRow,
                 selectedRow, setIsEdit, setIsView,
-                isEdit, isView
+                isEdit, isView,columns
             }}
         >
             <div className="flex h-screen bg-gray-100">
@@ -112,6 +119,7 @@ export default function CategoryMaster() {
                                     setIsView(false);
                                 }}
                                 selectedRow={state}
+                                columns={columns}
                             />
                         )}
                         <TableComponent ref={tableRef} />
