@@ -235,7 +235,7 @@ const ItemMaster = () => {
 
     const handleFileGenerate = async (type) => {
         const url = '/api/fileGenerate';
-        const stateValues = { CustomerCode: state.CustomerCode, CustomerName: state.CustomerName, Address1: state.Address1, Address2: state.Address2, PhoneNo: state.PhoneNo, PurchaseNo: state.PurchaseNo, PurchaseDate: state.PurchaseDate, PurchaseRefNo: state.PurchaseRefNo, GrandTotal: state.GrandTotal, Remarks: state.Remarks }
+        const stateValues = { CustomerCode: state.CustomerCode, CustomerName: state.CustomerName, Address1: state.Address1, Address2: state.Address2, PhoneNo: state.PhoneNo, PurchaseNo: state.PurchaseNo, PurchaseDate: state.PurchaseDate, PurchaseRefNo: state.PurchaseRefNo, GrandTotal: state.GrandTotal, Remarks: state.Remarks ,TaxValue:state.TaxValue,FreightCharge:state.FreightCharge,RoundOff:state.RoundOff,InvoiceTotal:state.InvoiceTotal}
         const params = { state: stateValues, tableData, type };
 
         try {

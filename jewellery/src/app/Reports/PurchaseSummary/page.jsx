@@ -184,7 +184,7 @@ const CategoryMaster = () => {
             window.alert("Kindly select the Supplier Name");
             return;
         }
-        const url = '/api/getPurchase';
+        const url = '/api/Purchasesummary';
         const params = {
             fromDate: state.FromDate, 
             toDate: state.ToDate,
@@ -214,6 +214,57 @@ const CategoryMaster = () => {
                     setRoundOffSum(roundoff);
                     setNetAmountSum(net);
                 }
+            }
+        })
+    }
+
+    const printpreview = async() => {
+        if (!state.FromDate) {
+            window.alert("Kindly select the From Date");
+            return;
+        }
+        else if (!state.ToDate) {
+            window.alert("Kindly select the To Date");
+            return;
+        }
+        else if (!state.SupplierName) {
+            window.alert("Kindly select the Supplier Name");
+            return;
+        }
+        const url = '/api/Purchasesummary';
+        const params = {
+            fromDate: state.FromDate, 
+            toDate: state.ToDate,
+            suppliercode: state.SupplierCode,
+            status: 'Active',
+            pageNumber: 1,
+            pageSize: 10
+        }
+        console.log("params", params)
+        await CommonAPISave({ url, params }).then((res) => {
+            if (res.Output.status.code == 200 && res.Output.data.pdfBuffer) {
+                let pdfbuffer = res.Output.data.pdfBuffer;
+                if (typeof pdfbuffer === "string") {
+                    pdfbuffer = pdfbuffer.split(",").map(Number);
+                }
+
+                const byteArray = new Uint8Array(pdfbuffer);
+                const blob = new Blob([byteArray], { type: 'application/pdf' });
+                const pdfUrl = URL.createObjectURL(blob);
+                const uniqueFileName = `PurchaseSummaryReport${Date.now()}.pdf`;
+
+                if (type === 'print') {
+                    window.open(pdfUrl, '_blank');
+                } else if (type === 'download') {
+                    const link = document.createElement('a');
+                    link.href = pdfUrl;
+                    link.download = uniqueFileName;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            } else {
+                console.error('PDF buffer is missing or response is incorrect');
             }
         })
     }
@@ -353,6 +404,7 @@ const CategoryMaster = () => {
                         </button>
 
                         <button
+                            onClick={printpreview}
                             className="w-[90px] h-[30px] text-sm rounded outline-none bg-sky-600 font-light text-white hover:bg-sky-800"
                         >
                             Print
