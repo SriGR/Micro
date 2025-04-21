@@ -184,7 +184,7 @@ const CategoryMaster = () => {
             window.alert("Kindly select the Supplier Name");
             return;
         }
-        const url = '/api/Purchasesummary';
+        const url = '/api/getPurchase';
         const params = {
             fromDate: state.FromDate, 
             toDate: state.ToDate,
