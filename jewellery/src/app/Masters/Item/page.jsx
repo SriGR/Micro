@@ -10,18 +10,6 @@ import { RiMenuFold2Line, RiMenuFoldLine } from "react-icons/ri";
 import ViewCard from "../../Components/helperComponents/ViewCard";
 import { ItemContext } from "../../contexts/ItemContext";
 
-const ItemMasterReducers = (state, action) => {
-    switch (action.type) {
-        case "RESET":
-            return initialState;
-        default:
-            return {
-                ...state,
-                [action.type]: action.payload,
-            };
-    }
-};
-
 const initialState = {
     itemcode: "",
     itemname: "",
@@ -34,6 +22,18 @@ const initialState = {
     status: "Active"
 };
 
+const ItemMasterReducers = (state, action) => {
+    switch (action.type) {
+        case "RESET":
+            return initialState;
+        default:
+            return {
+                ...state,
+                [action.type]: action.payload,
+            };
+    }
+};
+
 export default function ItemMaster() {
     const [state, dispatch] = useReducer(ItemMasterReducers, initialState);
     const [isOpen, setIsOpen] = useState(true);
@@ -41,6 +41,7 @@ export default function ItemMaster() {
     const [selectedRow, setselectedRow] = useState(null);
     const [isEdit, setIsEdit] = useState(false);
     const [isView, setIsView] = useState(false);
+
     const columns = [
         { key: "itemcode", label: "Item Code" },
         { key: "itemname", label: "Item Name" },
@@ -48,28 +49,39 @@ export default function ItemMaster() {
         { key: "hsncode", label: "HSN code" },
         { key: "taxname", label: "Tax Name" },
         { key: "uomname", label: "UOM Name" },
-      ];
+    ];
 
     const tableRef = useRef(null);
 
     const toggleSidebar = () => setIsOpen(!isOpen);
 
+    const pushSelectedToState = (row) => {
+        Object.entries(row).forEach(([key, value]) => {
+            dispatch({ type: key, payload: value });
+        });
+    };
+
     const saveItem = useCallback(async () => {
         if (!state.itemname) {
             showToast("Kindly enter the Item Name", "warn");
             return;
-        }
-        else if (!state.categorycode) {
+        } else if (!state.categorycode) {
             showToast("Kindly select the Category", "warn");
             return;
-        }
-        else if (!state.taxcode) {
+        } else if (!state.taxcode) {
             showToast("Kindly select the Tax", "warn");
             return;
+        }else if (!state.uomname) {
+            showToast("Kindly select the UOM", "warn");
+            return;
+        }else if (!state.hsncode) {
+            showToast("Kindly enter the HSN code", "warn");
+            return;
         }
+
         const res = await CommonAPISave({
             url: "/api/InsertItem",
-            params: state,
+            params: {...state, isEdit},
         });
 
         if (res.Output?.status?.code === 200) {
@@ -108,7 +120,7 @@ export default function ItemMaster() {
                         {!showEntry && !isView && (
                             <div className="py-2 flex justify-end px-3">
                                 <button
-                                    className="bg-blue-400  px-4 py-2 rounded hover:bg-blue-500 text-sm font-semibold"
+                                    className="bg-blue-400 px-4 py-2 rounded hover:bg-blue-500 text-sm font-semibold"
                                     onClick={() => {
                                         setShowEntry(true);
                                         setIsEdit(false);
@@ -122,13 +134,17 @@ export default function ItemMaster() {
                         )}
 
                         {showEntry && <EntryComponent />}
+
                         {!showEntry && isView && (
                             <ViewCard
                                 title="Item Details"
                                 onEdit={() => {
-                                    setIsEdit(true);
-                                    setShowEntry(true);
-                                    setIsView(false);
+                                    if (selectedRow) {
+                                        pushSelectedToState(selectedRow);
+                                        setIsEdit(true);
+                                        setShowEntry(true);
+                                        setIsView(false);
+                                    }
                                 }}
                                 onCancel={() => {
                                     setIsView(false);
@@ -144,6 +160,7 @@ export default function ItemMaster() {
                                 selectedRow={state}
                             />
                         )}
+
                         <TableComponent ref={tableRef} />
                     </section>
                 </section>

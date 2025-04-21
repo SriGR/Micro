@@ -46,10 +46,12 @@ export default async function handler(req, res) {
 
         const html = await template(records, fromDate, toDate, records[0].customername);
 
+        const isVercel = true 
+
         const browser = await puppeteer.launch({
-            headless: "new",
-            args: chromium.args,
-            executablePath: await chromium.executablePath(),
+            args: isVercel ? chromium.args : [],
+            executablePath: isVercel ? await chromium.executablePath() : 'C:/Program Files/Google/Chrome/Application/chrome.exe',
+            headless: isVercel ? chromium.headless : true,
         });
 
         const page = await browser.newPage();

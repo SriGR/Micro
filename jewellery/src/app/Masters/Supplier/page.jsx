@@ -65,7 +65,7 @@ export default function SupplierMaster() {
     const saveSupplier = useCallback(async () => {
         const res = await CommonAPISave({
             url: "/api/InsertSupplier",
-            params: state,
+            params: {...state, isEdit},
         });
 
         if (res.Output?.status?.code === 200) {
@@ -84,7 +84,7 @@ export default function SupplierMaster() {
                 state, dispatch, saveSupplier,
                 setShowEntry, setselectedRow,
                 selectedRow, setIsEdit, setIsView,
-                isEdit, isView,columns
+                isEdit, isView,columns,selectedRow
             }}
         >
             <div className="flex h-screen bg-gray-100">

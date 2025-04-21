@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -15,8 +15,9 @@ import CommonAPISave from "../../Components/CommonAPISave";
 import { MdClear } from "react-icons/md";
 
 const EntryComponent = () => {
-  const { state, dispatch, saveSupplier, setShowEntry } = useSupplier();
-  const [ StateSelect, setStateSelect] = useState([])
+  const { state, dispatch, saveSupplier, setShowEntry,selectedRow ,isEdit} = useSupplier();
+  const [StateSelect, setStateSelect] = useState([]);
+  const StaeRef = useRef(null);
   console.log("EntryComponent state", state);
 
   const handleSave = () => {
@@ -45,6 +46,14 @@ const EntryComponent = () => {
       }
     })
   }
+
+  useEffect(() => { 
+    if(isEdit && selectedRow){
+      setStateSelect([
+        { statecode: selectedRow.statecode, statename: selectedRow.statename }
+      ])
+    }
+  },[isEdit, selectedRow])
 
   return (
     <div className="p-4">
@@ -94,6 +103,7 @@ const EntryComponent = () => {
             <div className="w-full flex justify-start items-center flex-wrap gap-[10px]">
 
               {[
+                { label: 'Supplier Code:', field: 'suppliercode', placeholder: 'Enter Supplier Code' },
                 { label: 'Supplier Name:', field: 'customername', placeholder: 'Enter Supplier Name' },
                 { label: 'Address 1:', field: 'address1', placeholder: 'Enter Address 1' },
                 { label: 'Address 2:', field: 'address2', placeholder: 'Enter Address 2' },
@@ -130,6 +140,7 @@ const EntryComponent = () => {
                 <label className="w-full text-sm">State Name:</label>
                 <div className="relative w-full">
                   <select
+                    ref={StaeRef}
                     className="InputStyle w-full pr-8 appearance-none"
                     value={state.statename}
                     onClick={() => dropDownSelect('GetStates', { pageNumber: 1, pageSize: 10 })}

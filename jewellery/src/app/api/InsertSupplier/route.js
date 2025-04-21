@@ -10,12 +10,11 @@ export async function POST(request) {
         const pool = await getDBConnection();
         const requestDB = pool.request();
 
-        // Convert OpCreditBalance and OpDebitBalance to numbers
         const openingCredit = parseFloat(body.openingcredit) || 0;
         const openingDebit = parseFloat(body.openingdebit) || 0;
         const balance = openingCredit - openingDebit;
 
-        // Bind common input parameters
+        // Common inputs
         requestDB.input("customername", body.customername || "");
         requestDB.input("address1", body.address1 || "");
         requestDB.input("address2", body.address2 || "");
@@ -34,36 +33,78 @@ export async function POST(request) {
         let query = "";
         let result;
 
-        if (!body.suppliercode) {
-            // INSERT
+        const isEdit = body.isEdit || false;
+        requestDB.input("suppliercode", body.suppliercode || "");
+        requestDB.input("customername", body.customername);
+
+        if (!isEdit) {
+            // Validation for duplicate customername and suppliercode
+            const duplicateCheck = await requestDB.query(
+                `SELECT suppliercode FROM ms_suppliermaster 
+                 WHERE suppliercode = @suppliercode AND customername = @customername`
+            );
+
+            if (duplicateCheck.recordset.length > 0) {
+                return NextResponse.json(
+                    {
+                        Output: {
+                            status: {
+                                code: 400,
+                                message: "This customer already exists with the same supplier code.",
+                            },
+                        },
+                    },
+                    { status: 400 }
+                );
+            }
+        }
+
+        if (isEdit) {
+            // Check if supplier exists (for update scenario)
+            const checkResult = await requestDB.query(
+                `SELECT suppliercode FROM ms_suppliermaster WHERE suppliercode = @suppliercode`
+            );
+
+            if (checkResult.recordset.length > 0) {
+                // UPDATE
+                query = `
+                    UPDATE ms_suppliermaster SET
+                        customername = @customername,
+                        address1 = @address1,
+                        address2 = @address2,
+                        address3 = @address3,
+                        phonenumber = @phonenumber,
+                        gstnumber = @gstnumber,
+                        openingcredit = @openingcredit,
+                        openingdebit = @openingdebit,
+                        balance = @balance,
+                        statecode = @statecode,
+                        status = @status,
+                        createdby = @createdby
+                    WHERE suppliercode = @suppliercode;
+
+                    SELECT * FROM ms_suppliermaster WHERE suppliercode = @suppliercode;
+                `;
+                result = await requestDB.query(query);
+            } else {
+                // INSERT with supplied suppliercode
+                query = `
+                    INSERT INTO ms_suppliermaster 
+                        (suppliercode, customername, address1, address2, address3, phonenumber, gstnumber, openingcredit, openingdebit, balance, statecode, status, createdby)
+                    OUTPUT INSERTED.suppliercode
+                    VALUES 
+                        (@suppliercode, @customername, @address1, @address2, @address3, @phonenumber, @gstnumber, @openingcredit, @openingdebit, @balance, @statecode, @status, @createdby);
+                `;
+                result = await requestDB.query(query);
+            }
+        } else {
+            // INSERT without suppliercode (auto-generate or DB trigger assumed)
             query = `
                 INSERT INTO ms_suppliermaster 
                     (customername, address1, address2, address3, phonenumber, gstnumber, openingcredit, openingdebit, balance, statecode, status, createdby)
                 OUTPUT INSERTED.suppliercode
                 VALUES 
-                    (@customername, @address1, @address2, @address3, @phonenumber, @gstnumber, @openingcredit, @openingdebit, @balance, @statecode, @status, @createdby)
-            `;
-            result = await requestDB.query(query);
-        } else {
-            // UPDATE
-            requestDB.input("suppliercode", body.suppliercode);
-            query = `
-                UPDATE ms_suppliermaster SET
-                    customername = @customername,
-                    address1 = @address1,
-                    address2 = @address2,
-                    address3 = @address3,
-                    phonenumber = @phonenumber,
-                    gstnumber = @gstnumber,
-                    openingcredit = @openingcredit,
-                    openingdebit = @openingdebit,
-                    balance = @balance,
-                    statecode = @statecode,
-                    status = @status,
-                    createdby = @createdby
-                WHERE suppliercode = @suppliercode;
-
-                SELECT * FROM ms_suppliermaster WHERE suppliercode = @suppliercode;
+                    (@customername, @address1, @address2, @address3, @phonenumber, @gstnumber, @openingcredit, @openingdebit, @balance, @statecode, @status, @createdby);
             `;
             result = await requestDB.query(query);
         }
@@ -73,7 +114,7 @@ export async function POST(request) {
                 Output: {
                     status: {
                         code: 200,
-                        message: body.suppliercode ? "Updated successfully" : "Saved successfully",
+                        message: isEdit ? "Updated successfully" : "Saved successfully",
                     },
                     data: result.recordset || [],
                 },

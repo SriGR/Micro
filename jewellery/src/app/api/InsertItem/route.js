@@ -6,36 +6,103 @@ export async function POST(request) {
     try {
         const requestBody = await request.json();
         const body = requestBody.data;
-
+        const isEdit = body.isEdit;
+        console.log(isEdit, "isEdit flag in InsertItem API");
         const pool = await getDBConnection();
         const requestDB = pool.request();
 
-        // Auto-generate next 3-digit category code
-        const getMaxCodeQuery = `SELECT MAX(CAST(itemcode AS INT)) AS maxCode FROM ms_item`;
-        const maxCodeResult = await requestDB.query(getMaxCodeQuery);
+        const {
+            itemcode,
+            itemname,
+            hsncode,
+            uomname,
+            categorycode,
+            taxcode,
+            status,
+            createdby
+        } = body;
 
-        const nextCode = (parseInt(maxCodeResult.recordset[0].maxCode || "0", 10) + 1)
-            .toString()
-            .padStart(3, "0"); // Format to 3-digit (e.g., "001", "045")
+        if (!itemcode || !itemname) {
+            return NextResponse.json(
+                {
+                    Output: {
+                        status: {
+                            code: 400,
+                            message: "Item code and item name are required.",
+                        },
+                    },
+                },
+                { status: 400 }
+            );
+        }
 
+        requestDB.input("itemcode", itemcode);
+        requestDB.input("itemname", itemname);
+   
+        if (!isEdit) {
+        
+            const duplicateCheck = await requestDB.query(`
+                SELECT itemcode FROM ms_item 
+                WHERE itemcode = @itemcode AND itemname = @itemname
+            `);
+            if (duplicateCheck.recordset.length > 0) {
+                return NextResponse.json(
+                    {
+                        Output: {
+                            status: {
+                                code: 400,
+                                message: "This item code and item name already exists.",
+                            },
+                        },
+                    },
+                    { status: 400 }
+                );
+            }
+        }
 
-        requestDB.input("itemcode", nextCode);
-        requestDB.input("itemname", body.itemname);
-        requestDB.input("hsncode", body.hsncode);
-        requestDB.input("uomname", body.uomname);
-        requestDB.input("categorycode", body.categorycode);
-        requestDB.input("taxcode", body.taxcode);
-        requestDB.input("status", body.status);
-        requestDB.input("createdby", body.createdby);
-        requestDB.input("extra", "");
+ 
+        requestDB.input("hsncode", hsncode);
+        requestDB.input("uomname", uomname);
+        requestDB.input("categorycode", categorycode);
+        requestDB.input("taxcode", taxcode);
+        requestDB.input("status", status);
+        requestDB.input("createdby", createdby);
 
-        const query = `INSERT INTO ms_item (itemcode, itemname, hsncode, uomname, categorycode, taxcode, status, createdby)
-                    OUTPUT INSERTED.itemcode  -- Return the inserted itemcode
-                VALUES (@itemcode, @itemname, @hsncode, @uomname, @categorycode, @taxcode, @status, @createdby);
+        if (isEdit) {
+            // UPDATE scenario
+            const updateQuery = `
+                UPDATE ms_item
+                SET itemname = @itemname,
+                    hsncode = @hsncode,
+                    uomname = @uomname,
+                    categorycode = @categorycode,
+                    taxcode = @taxcode,
+                    status = @status,
+                    createdby = @createdby
+                WHERE itemcode = @itemcode;
+            `;
+            await requestDB.query(updateQuery);
+
+            return NextResponse.json(
+                {
+                    Output: {
+                        status: {
+                            code: 200,
+                            message: "Updated Successfully",
+                        },
+                        data: [body],
+                    },
+                },
+                { status: 200 }
+            );
+        } else {
+            // INSERT scenario
+            const query = `INSERT INTO ms_item (itemcode, itemname, hsncode, uomname, categorycode, taxcode, status, createdby)
+            OUTPUT INSERTED.itemcode  -- Return the inserted itemcode
+        VALUES (@itemcode, @itemname, @hsncode, @uomname, @categorycode, @taxcode, @status, @createdby);
 `;
-        const qryExec = await requestDB.query(query);
-
-        if (qryExec.recordsets && qryExec.recordsets.length > 0) {
+            const result = await requestDB.query(query);
+           console.log(result, "Insert result");
             return NextResponse.json(
                 {
                     Output: {
@@ -43,30 +110,21 @@ export async function POST(request) {
                             code: 200,
                             message: "Saved Successfully",
                         },
-                        data: [qryExec.recordsets[0]],
-                    },
-                },
-                { status: 200 }
-            );
-        } else {
-            return NextResponse.json(
-                {
-                    Output: {
-                        status: {
-                            code: 400,
-                            message: "No records found",
-                        },
-                        data: [],
+                        data: result.recordset || [],
                     },
                 },
                 { status: 200 }
             );
         }
     } catch (err) {
+        console.error("Error in saving/updating item:", err.message);
         return NextResponse.json(
             {
                 Output: {
-                    status: { code: 500, message: err.message },
+                    status: {
+                        code: 500,
+                        message: err.message,
+                    },
                 },
             },
             { status: 500 }

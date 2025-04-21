@@ -1,17 +1,21 @@
 import puppeteer from 'puppeteer-core';
 import chromium from '@sparticuz/chromium';
 
+
+
 export default async function handler(req, res) {
     try {
         const { state, tableData } = req.body.data;
-        console.log(req.body, 'state');
+        console.log("Request Data:", req.body);
 
-        const html = await template(state, tableData);
+        const html = await template(state, tableData); // Your HTML generation logic here
+
+        const isVercel = true // AWS_REGION is set in Vercel serverless functions
 
         const browser = await puppeteer.launch({
-            headless: "new",
-            args: chromium.args,
-            executablePath: await chromium.executablePath(),
+            args: isVercel ? chromium.args : [],
+            executablePath: isVercel ? await chromium.executablePath() : 'C:/Program Files/Google/Chrome/Application/chrome.exe',
+            headless: isVercel ? chromium.headless : true,
         });
 
         const page = await browser.newPage();
@@ -25,22 +29,21 @@ export default async function handler(req, res) {
         res.setHeader("Content-Disposition", "attachment; filename=invoice.pdf");
 
         return res.status(200).json({
-            "Output": {
-                "status": { "code": 200, "message": "Success" },
-                "data": { "pdfBuffer": pdfBuffer.toString("base64") }
+            Output: {
+                status: { code: 200, message: "Success" },
+                data: { pdfBuffer: pdfBuffer.toString("base64") }
             }
         });
     } catch (error) {
+        console.error("PDF generation error:", error);
         return res.status(400).json({
-            "Output": {
-                "status": { "code": 400, "message": error.message },
-                "data": { "pdfBuffer": "" }
+            Output: {
+                status: { code: 400, message: error.message },
+                data: { pdfBuffer: "" }
             }
         });
     }
 }
-
-
 
 
 const style = `<style>
@@ -191,7 +194,7 @@ async function generateTableRows(tableData) {
                 <td>${val['ItemName'] || ''}</td>
                 <td>${val['Description'] || ''}</td>
                 <td>${val['Qty'] || ''}</td>
-                <td>${val['uomname'] || ''}</td>
+                <td>${val['UOM'] || ''}</td>
                 <td>${val['Rate'] || ''}</td>
                 <td>${val['Total'] || ''}</td>
             </tr>

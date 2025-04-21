@@ -253,16 +253,7 @@ const CategoryMaster = () => {
                 const pdfUrl = URL.createObjectURL(blob);
                 const uniqueFileName = `PurchaseSummaryReport${Date.now()}.pdf`;
 
-                if (type === 'print') {
-                    window.open(pdfUrl, '_blank');
-                } else if (type === 'download') {
-                    const link = document.createElement('a');
-                    link.href = pdfUrl;
-                    link.download = uniqueFileName;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                }
+                window.open(pdfUrl, '_blank');
             } else {
                 console.error('PDF buffer is missing or response is incorrect');
             }

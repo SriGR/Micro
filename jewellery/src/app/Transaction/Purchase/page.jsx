@@ -1,5 +1,5 @@
 "use client";
-import { useState, useReducer, useEffect, useCallback } from "react";
+import { useState, useReducer, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { X, LogOut, ChevronDown } from "lucide-react";
 import Link from "next/link";
@@ -20,120 +20,7 @@ import { SlHome } from "react-icons/sl";
 import CommonAPISave from "app/Components/CommonAPISave";
 import { RiMenuFold2Line } from "react-icons/ri";
 import { RiMenuFoldLine } from "react-icons/ri";
-import { type } from "os";
-
-const Sidebar = ({ isOpen, toggleSidebar }) => {
-    const [openSection, setOpenSection] = useState(null);
-
-    const toggleSection = (section) => {
-        setOpenSection(openSection === section ? null : section);
-    };
-
-    return (
-        <div className={`bg-gray-900 text-white w-[230px] min-h-screen p-5 transition-all ${isOpen ? "block" : "hidden"} `}>
-            <div className="flex justify-between items-center">
-                <Image src="/images/BrandLogo.jpg" alt="Brand Logo" width={170} height={0} className="w-[120px] sm:w-[140px] md:w-[170px]" />
-                <button onClick={toggleSidebar} className="md:hidden">
-                    <X className="w-6 h-6" />
-                </button>
-            </div>
-
-            <ul className="mt-5 space-y-2">
-                <li>
-                    <Link href="/dashboard"
-                        className="flex items-center font-light text-[14px] p-2 hover:bg-gray-700 rounded">
-                        <SlHome className="w-5 h-5 mr-2" /> Dashboard
-                    </Link>
-                </li>
-
-                {/* Masters Section */}
-                <li>
-                    <button onClick={() => toggleSection("Masters")} className="flex justify-between w-full p-2 hover:bg-gray-700 rounded">
-                        <span className="flex items-center font-light text-[14px]"><IoFolderOutline className="w-5 h-5 mr-2" /> Masters</span>
-                        <ChevronDown className={`w-4 h-4 transition-transform ${openSection === "Masters" ? "rotate-180" : ""}`} />
-                    </button>
-                    {openSection === "Masters" && (
-                        <ul className="mt-1 space-y-1">
-                            <li><Link href="/Masters/Category"
-                                className="flex items-center font-light text-[14px] p-2 hover:bg-gray-700 rounded">
-                                <HiBars3BottomLeft className="w-4 h-4 mr-3" /> Category</Link></li>
-
-                            <li><Link href="/Masters/Item"
-                                className="flex items-center font-light text-[14px] p-2 hover:bg-gray-700 rounded">
-                                <HiBars3BottomLeft className="w-4 h-4 mr-3" /> Item</Link></li>
-
-                            <li><Link href="/Masters/Supplier"
-                                className="flex items-center font-light text-[14px] p-2 hover:bg-gray-700 rounded">
-                                <HiBars3BottomLeft className="w-4 h-4 mr-3" /> Supplier</Link></li>
-
-                            <li><Link href="/Masters/State"
-                                className="flex items-center font-light text-[14px] p-2 hover:bg-gray-700 rounded">
-                                <HiBars3BottomLeft className="w-4 h-4 mr-3" /> State</Link></li>
-
-                            <li><Link href="/Masters/Tax"
-                                className="flex items-center font-light text-[14px] p-2 hover:bg-gray-700 rounded">
-                                <HiBars3BottomLeft className="w-4 h-4 mr-3" /> Tax</Link></li>
-                        </ul>
-                    )}
-                </li>
-
-                <li>
-                    <button onClick={() => toggleSection("Transaction")} className="flex justify-between w-full p-2 hover:bg-gray-700 rounded">
-                        <span className="flex items-center font-light text-[14px]"><IoFolderOutline className="w-5 h-5 mr-2" /> Transaction</span>
-                        <ChevronDown className={`w-4 h-4 transition-transform ${openSection === "Transaction" ? "rotate-180" : ""}`} />
-                    </button>
-                    {openSection === "Transaction" && (
-                        <ul className="mt-1 space-y-1">
-                            <li><Link href="/Transaction/Purchase"
-                                className="flex items-center font-light text-[14px] p-2 hover:bg-gray-700 rounded activeBar">
-                                <HiBars3BottomLeft className="w-4 h-4 mr-3" /> Purchase</Link></li>
-                        </ul>
-                    )}
-                </li>
-
-                <li>
-                    <button onClick={() => toggleSection("Reports")} className="flex justify-between w-full p-2 hover:bg-gray-700 rounded">
-                        <span className="flex items-center font-light text-[14px]"><IoFolderOutline className="w-5 h-5 mr-2" /> Reports</span>
-                        <ChevronDown className={`w-4 h-4 transition-transform ${openSection === "Reports" ? "rotate-180" : ""}`} />
-                    </button>
-                    {openSection === "Reports" && (
-                        <ul className="mt-1 space-y-1">
-                            <li><Link href="/Reports/PurchaseSummary"
-                                className="flex items-center font-light text-[14px] p-2 hover:bg-gray-700 rounded">
-                                <HiBars3BottomLeft className="w-4 h-4 mr-3" /> Purchase Summary</Link></li>
-                        </ul>
-                    )}
-                </li>
-
-                <li>
-                    <button onClick={() => toggleSection("Purchase Register")} className="flex justify-between w-full p-2 hover:bg-gray-700 rounded">
-                        <span className="flex items-center font-light text-[14px]"><IoFolderOutline className="w-5 h-5 mr-2" /> Purchase Register</span>
-                        <ChevronDown className={`w-4 h-4 transition-transform ${openSection === "Purchase Register" ? "rotate-180" : ""}`} />
-                    </button>
-                    {openSection === "Purchase Register" && (
-                        <ul className="mt-1 space-y-1">
-                        </ul>
-                    )}
-                </li>
-
-                <li>
-                    <button onClick={() => toggleSection("Utilities")} className="flex justify-between w-full p-2 hover:bg-gray-700 rounded">
-                        <span className="flex items-center font-light text-[14px]"><IoFolderOutline className="w-5 h-5 mr-2" /> Utilities</span>
-                        <ChevronDown className={`w-4 h-4 transition-transform ${openSection === "Utilities" ? "rotate-180" : ""}`} />
-                    </button>
-                    {openSection === "Utilities" && (
-                        <ul className="mt-1 space-y-1">
-                        </ul>
-                    )}
-                </li>
-            </ul>
-
-            <button className="mt-4 w-full flex items-center p-2 bg-red-600 hover:bg-red-700 rounded text-white">
-                <LogOut className="w-4 h-4 mr-2" /> Logout
-            </button>
-        </div>
-    );
-};
+import Sidebar from "../../Components/Sidebar";
 
 const ItemMasterReducers = (state, action) => {
     switch (action.type) {
@@ -176,6 +63,7 @@ const initialState = {
 const ItemMaster = () => {
     const [isOpen, setIsOpen] = useState(true);
     const toggleSidebar = () => setIsOpen(!isOpen);
+    const supplierRef = useRef();
 
     const [state, dispatch] = useReducer(ItemMasterReducers, initialState);
 
@@ -235,7 +123,7 @@ const ItemMaster = () => {
 
     const handleFileGenerate = async (type) => {
         const url = '/api/fileGenerate';
-        const stateValues = { CustomerCode: state.CustomerCode, CustomerName: state.CustomerName, Address1: state.Address1, Address2: state.Address2, PhoneNo: state.PhoneNo, PurchaseNo: state.PurchaseNo, PurchaseDate: state.PurchaseDate, PurchaseRefNo: state.PurchaseRefNo, GrandTotal: state.GrandTotal, Remarks: state.Remarks ,TaxValue:state.TaxValue,FreightCharge:state.FreightCharge,RoundOff:state.RoundOff,InvoiceTotal:state.InvoiceTotal}
+        const stateValues = { CustomerCode: state.CustomerCode, CustomerName: state.CustomerName, Address1: state.Address1, Address2: state.Address2, PhoneNo: state.PhoneNo, PurchaseNo: state.PurchaseNo, PurchaseDate: state.PurchaseDate, PurchaseRefNo: state.PurchaseRefNo, GrandTotal: state.GrandTotal, Remarks: state.Remarks, TaxValue: state.TaxValue, FreightCharge: state.FreightCharge, RoundOff: state.RoundOff, InvoiceTotal: state.InvoiceTotal }
         const params = { state: stateValues, tableData, type };
 
         try {
@@ -275,8 +163,23 @@ const ItemMaster = () => {
 
     const ValidateFunction = () => {
         saveFunction();
+        supplierRef.current?.focus();
+  
     }
 
+    const getPurchaseNo = async () => {
+        const url = '/api/purchasenumber';
+        const params = {}
+        await CommonAPISave({ url, params }).then((res) => {
+            if (res.Output.status.code && res.Output.data.length > 0) {
+                const data = res.Output.data
+                dispatch({ type: "PurchaseNo", payload: data })
+            }
+        })
+    }
+    useEffect(() => {
+        getPurchaseNo();
+    }, [])
 
     const saveFunction = useCallback(async () => {
         const url = '/api/InsertPurchase';
@@ -286,13 +189,42 @@ const ItemMaster = () => {
             if (res.Output && res.Output.status.code == 200 && res.Output.data.length > 0) {
                 // const data = res.Output.data
                 showToast(res.Output.status.message, "success");
-                dispatch({ type: "RESET" });
+                dispatch({type:"RESET"})
+                setTableData([]);
+                getPurchaseNo();
             } else {
                 showToast(res.Output.status.message, "warn")
             }
         })
 
-    }, [state])
+    }, [state]);
+
+    useEffect(() => {
+        const grandTotal = tableData.reduce((sum, row) => {
+            const qty = parseFloat(row.Qty) || 0;
+            const rate = parseFloat(row.Rate) || 0;
+            const total = qty * rate;
+            return sum + total;
+        }, 0);
+
+        const taxValue = parseFloat(state.TaxValue) || 0;
+        const freight = parseFloat(state.FreightCharge) || 0;
+
+        const taxAmount = (grandTotal * taxValue) / 100;
+        const rawTotal = grandTotal + taxAmount + freight;
+
+        const roundedInvoice = Math.round(rawTotal);
+        const roundOff = (roundedInvoice - rawTotal).toFixed(2);
+        const invoiceTotal = (rawTotal + parseFloat(roundOff)).toFixed(2);
+
+        dispatch({ type: "GrandTotal", payload: grandTotal.toFixed(2) });
+        dispatch({ type: "RoundOff", payload: roundOff });
+        dispatch({ type: "InvoiceTotal", payload: invoiceTotal });
+    }, [tableData, state.TaxValue, state.FreightCharge]);
+
+    useEffect(() => {
+        supplierRef.current?.focus();
+    }, []);
 
     return (
         <div className="flex h-screen">
@@ -314,6 +246,7 @@ const ItemMaster = () => {
                             <label className="w-[100px] h-full flex justify-start items-center text-xs">Supplier :</label>
                             <div className="relative w-full">
                                 <select
+                                    ref={supplierRef}
                                     className="InputStyle w-full pr-8 appearance-none"
                                     value={state.CustomerName}
                                     onClick={() => { dropDownSelect('getSupplier', { pageNumber: 1, pageSize: 10 }) }}
@@ -657,7 +590,7 @@ const ItemMaster = () => {
                         <div className="w-[400px] h-full flex flex-col gap-2 justify-start items-start">
                             <div className="w-full h-[28px] flex justify-start items-center">
                                 <div className="w-[170px] h-full flex justify-start items-center">
-                                    <label className="h-full flex justify-start items-center text-xs">Tax : </label>
+                                    <label className="h-full flex justify-start items-center text-xs w-[27px]">Tax : </label>
                                     <select
                                         className="TaxInputForPurchase flex-1 pr-8 appearance-none"
                                         value={state.TaxName}
